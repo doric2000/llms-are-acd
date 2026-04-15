@@ -1,0 +1,9 @@
+backend: "ollama"
+model_name: "deepseek-r1:1.5b"
+base_url: "http://10.100.102.201:11434/v1"
+seed: 42069
+episodes: 1000
+generate:
+  max_new_tokens: 384
+  max_length: 1024
+  temperature: 1

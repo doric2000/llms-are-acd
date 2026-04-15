@@ -1,0 +1,158 @@
+from __future__ import annotations
+
+import ast
+import copy
+import json
+import os
+import re
+from typing import Any, Dict, List, Mapping
+
+from CybORG.Agents.LLMAgents.llm_adapter.backend.model_backend import ModelBackend
+
+
+HF_TOKEN = os.environ.get("HF_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+
+
+class BackendFactory:
+	"""Factory class for creating model backend instances."""
+
+	@staticmethod
+	def create_backend(backend_name: str, hyperparams: dict) -> ModelBackend:
+		backend_name = backend_name.lower()
+		if backend_name == "openai":
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.openai import OpenAIBackend
+
+			return OpenAIBackend(hyperparams=hyperparams, api_key=OPENAI_API_KEY)
+		if backend_name == "new-openai":
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.openai import NewOpenAIBackend
+
+			return NewOpenAIBackend(hyperparams=hyperparams, api_key=OPENAI_API_KEY)
+		if backend_name == "huggingface":
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.huggingface import HuggingFaceBackend
+
+			return HuggingFaceBackend(hyperparams=hyperparams, token=HF_TOKEN)
+		if backend_name == "deepseek":
+			if not OPENROUTER_API_KEY:
+				raise ValueError("OPENROUTER_API_KEY environment variable is required for DeepSeek models")
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.deepseek import DeepSeekBackend
+
+			return DeepSeekBackend(hyperparams=hyperparams, api_key=OPENROUTER_API_KEY)
+		if backend_name == "ollama":
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.ollama import OllamaBackend
+
+			return OllamaBackend(hyperparams=hyperparams)
+		if backend_name == "dummy":
+			from CybORG.Agents.LLMAgents.llm_adapter.backend.dummy import DummyBackend
+
+			return DummyBackend()
+		raise ValueError(f"Invalid backend: {backend_name}")
+
+
+class ModelManager:
+	"""Model manager for chat-completion backends.
+
+	The manager centralizes backend selection and provides structured-output
+	utilities so downstream policies can request a JSON-like action/reason pair
+	and fall back safely when the model drifts away from the requested format.
+	"""
+
+	STRUCTURED_OUTPUT_INSTRUCTION = (
+		"Return a valid JSON object with exactly two keys: action and reason. "
+		"The action value must be one of the allowed defense actions with its parameter. "
+		"The reason value must be a short explanation. Return JSON only."
+	)
+
+	def __init__(self, hyperparams: dict):
+		self.hyperparams = hyperparams
+		self.backend_name = hyperparams["backend"].lower()
+		self.model_backend = BackendFactory.create_backend(self.backend_name, hyperparams)
+		self.enable_schema_constraints = hyperparams.get("schema_constraints", True)
+		self.enable_self_correction = hyperparams.get("self_correction", True)
+		self.max_repair_attempts = int(hyperparams.get("repair_attempts", 1))
+
+	def generate_response(self, message: List[Dict[str, str]]) -> str:
+		"""Generates a free-form response using the selected backend."""
+		try:
+			return self.model_backend.generate(message)
+		except Exception:
+			# Keep evaluation running even if model endpoint is unavailable.
+			return '{"action": "Sleep", "reason": "Model request failed; defaulted to Sleep."}'
+
+	def generate_structured_response(self, message: List[Dict[str, str]]) -> Dict[str, str]:
+		"""Generates a structured response with action/reason keys."""
+		structured_messages = self._inject_structure_instruction(message)
+		raw_response = self.generate_response(structured_messages)
+		parsed_response = self._parse_structured_payload(raw_response)
+		if parsed_response is not None:
+			return parsed_response
+
+		if self.enable_self_correction:
+			for _ in range(self.max_repair_attempts):
+				repair_messages = copy.deepcopy(structured_messages)
+				repair_messages.append({"role": "assistant", "content": raw_response})
+				repair_messages.append({
+					"role": "user",
+					"content": (
+						"The previous response was invalid. Rewrite it as a valid JSON object "
+						"with keys action and reason only."
+					),
+				})
+				raw_response = self.generate_response(repair_messages)
+				parsed_response = self._parse_structured_payload(raw_response)
+				if parsed_response is not None:
+					return parsed_response
+
+		return {"action": "Sleep", "reason": "Model output was invalid; defaulted to Sleep."}
+
+	def _inject_structure_instruction(self, message: List[Dict[str, str]]) -> List[Dict[str, str]]:
+		messages = copy.deepcopy(message)
+		if not self.enable_schema_constraints:
+			return messages
+
+		instruction = {"role": "system", "content": self.STRUCTURED_OUTPUT_INSTRUCTION}
+		if messages and messages[0].get("role") == "system":
+			messages[0]["content"] = f"{messages[0].get('content', '')}\n\n{self.STRUCTURED_OUTPUT_INSTRUCTION}"
+		else:
+			messages.insert(0, instruction)
+		return messages
+
+	def _parse_structured_payload(self, response: Any) -> Dict[str, str] | None:
+		if isinstance(response, Mapping):
+			action = str(response.get("action", "")).strip()
+			reason = str(response.get("reason", "")).strip()
+			if action:
+				return {"action": action, "reason": reason}
+			return None
+
+		if not isinstance(response, str):
+			return None
+
+		text = response.strip()
+		if not text:
+			return None
+
+		json_candidates = [text]
+		json_candidates.extend(match.group(0) for match in re.finditer(r"\{.*?\}", text, re.DOTALL))
+
+		for candidate in json_candidates:
+			for parser in (json.loads, ast.literal_eval):
+				try:
+					parsed = parser(candidate)
+					if isinstance(parsed, Mapping):
+						action = str(parsed.get("action", "")).strip()
+						reason = str(parsed.get("reason", "")).strip()
+						if action:
+							return {"action": action, "reason": reason}
+				except Exception:
+					continue
+
+		action_match = re.search(r"action\s*[:=]\s*([^\n,}]+)", text, re.IGNORECASE)
+		reason_match = re.search(r"reason\s*[:=]\s*([^\n,}]+)", text, re.IGNORECASE)
+		if action_match:
+			action = action_match.group(1).strip().strip("\"'")
+			reason = reason_match.group(1).strip().strip("\"'") if reason_match else ""
+			return {"action": action, "reason": reason}
+
+		return None
