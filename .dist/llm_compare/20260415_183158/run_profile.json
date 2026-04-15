@@ -1,0 +1,42 @@
+{
+  "profile_name": "quick",
+  "strict_mode": false,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 2,
+    "episode_length": 5,
+    "models": [
+      "dummy"
+    ]
+  },
+  "matrix_mode": "paper",
+  "matrix_cases": [
+    {
+      "case_id": "red-aggressive__blue-s1",
+      "red_variant": "aggressive",
+      "scenario_seed": 11,
+      "scenario_id": "scenario_1"
+    },
+    {
+      "case_id": "red-aggressive__blue-s2",
+      "red_variant": "aggressive",
+      "scenario_seed": 22,
+      "scenario_id": "scenario_2"
+    },
+    {
+      "case_id": "red-aggressive__blue-s3",
+      "red_variant": "aggressive",
+      "scenario_seed": 33,
+      "scenario_id": "scenario_3"
+    },
+    {
+      "case_id": "red-aggressive__blue-s4",
+      "red_variant": "aggressive",
+      "scenario_seed": 44,
+      "scenario_id": "scenario_4"
+    }
+  ]
+}

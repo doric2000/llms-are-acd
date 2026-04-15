@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-04-15T18:41:17",
+  "run_profile": {
+    "profile_name": "quick",
+    "strict_mode": false,
+    "strict_baseline": {
+      "max_eps": 2,
+      "episode_length": 500
+    },
+    "effective": {
+      "max_eps": 2,
+      "episode_length": 5,
+      "models": [
+        "deepseek-r1-1.5b"
+      ]
+    },
+    "matrix_mode": "none",
+    "matrix_cases": [
+      {
+        "case_id": "single",
+        "red_variant": "finite_state",
+        "scenario_seed": null,
+        "scenario_id": null
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_count": 1,
+      "failed_case_count": 0,
+      "reward_mean": 0,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.75
+    }
+  ],
+  "cases": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184038/deepseek-r1-1.5b/single",
+      "case_id": "single",
+      "red_variant": "finite_state",
+      "scenario_seed": null,
+      "scenario_id": null,
+      "return_code": 0,
+      "elapsed": "0:00:20.734578",
+      "reward_mean": 0,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.75
+    }
+  ]
+}

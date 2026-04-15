@@ -1,0 +1,16 @@
+{
+  "name": "quick",
+  "strict_mode": false,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 2,
+    "episode_length": 5,
+    "scenario_name": "Scenario4",
+    "scenario_id": "scenario_2",
+    "red_variant": "stealthy",
+    "red_agent_class": "StealthyFSMAgent"
+  }
+}

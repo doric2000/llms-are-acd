@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-04-15T18:03:09",
+  "run_profile": {
+    "profile_name": "quick",
+    "strict_mode": false,
+    "strict_baseline": {
+      "max_eps": 2,
+      "episode_length": 500
+    },
+    "effective": {
+      "max_eps": 2,
+      "episode_length": 5,
+      "models": [
+        "dummy"
+      ]
+    }
+  },
+  "models": [
+    {
+      "name": "dummy",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/dummy.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_180234/dummy",
+      "return_code": 1,
+      "elapsed": null,
+      "reward_mean": null,
+      "reward_stdev": null
+    }
+  ]
+}

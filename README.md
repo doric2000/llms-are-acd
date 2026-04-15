@@ -8,6 +8,14 @@ use of Large Language Models (LLMs) and Reinforcement Learning (RL) for Autonomo
 # Paper
 [IEEE CAI 2025 - Adaptive Cyber Defense Workshop: Paper Pre-print](https://arxiv.org/abs/2505.04843)
 
+# Project Implementation Log
+
+Step-by-step implementation details for the ongoing "Beyond the Baseline" extension are tracked in [IMPLEMENTATION_CHANGELOG.md](IMPLEMENTATION_CHANGELOG.md).
+
+Current run profiles for reproducibility:
+- `quick` profile: development iteration profile.
+- `strict` profile: paper-parity lock (`max_eps=2`, `episode_length=500`).
+
 Citation:
 ```latex
 @misc{castro2025largelanguagemodelsautonomous,

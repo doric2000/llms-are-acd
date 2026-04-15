@@ -43,6 +43,32 @@ TOTAL_STEPS_PROGRESS_BAR = 1000 # TODO: Get this from the environment
 python3 -m CybORG.Evaluation.evaluation --max-eps 2 Evaluation/llamagym /tmp/GPT4o --wandb-entity <wandb username> --wandb-mode online
 ```
 
+## Run both default experiment models automatically
+
+The comparison runner defaults to:
+- `deepseek-r1-1.5b`
+- `qwen2.5-7b`
+
+```bash
+python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile quick --wandb-mode offline
+```
+
+Use profiles:
+- `--profile quick`: development iteration profile.
+- `--profile strict`: paper-parity profile (enforces `max_eps=2` and `episode_length=500`).
+
+Strict example:
+
+```bash
+python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile strict --max-eps 2 --episode-length 500 --wandb-mode offline
+```
+
+Each run saves profile metadata in `run_profile.json` under the output root and per-model directories.
+
+`summary.json` now includes:
+- `hallucination`: syntactic/semantic counts, repairs, and hallucination rate
+- `defense_metrics`: recovery precision, clean hosts mean, MTTR, red impact count
+
 - To log results offline, use `offline` for `--wandb-mode`. If running offline, `--wandb-entity` is not necessary but can be used if syncing results after evaluation run. Note: Weave does not log traces in offline mode.  
 
 ```

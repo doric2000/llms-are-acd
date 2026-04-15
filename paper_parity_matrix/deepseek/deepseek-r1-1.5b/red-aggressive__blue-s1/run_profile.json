@@ -1,0 +1,66 @@
+{
+  "profile_name": "quick",
+  "strict_mode": false,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 30,
+    "episode_length": 30,
+    "models": [
+      "deepseek-r1-1.5b"
+    ]
+  },
+  "matrix_mode": "paper",
+  "matrix_cases": [
+    {
+      "case_id": "red-aggressive__blue-s1",
+      "red_variant": "aggressive",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1"
+    },
+    {
+      "case_id": "red-aggressive__blue-s2",
+      "red_variant": "aggressive",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2"
+    },
+    {
+      "case_id": "red-aggressive__blue-s3",
+      "red_variant": "aggressive",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3"
+    },
+    {
+      "case_id": "red-aggressive__blue-s4",
+      "red_variant": "aggressive",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4"
+    },
+    {
+      "case_id": "red-stealthy__blue-s1",
+      "red_variant": "stealthy",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1"
+    },
+    {
+      "case_id": "red-stealthy__blue-s2",
+      "red_variant": "stealthy",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2"
+    },
+    {
+      "case_id": "red-stealthy__blue-s3",
+      "red_variant": "stealthy",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3"
+    },
+    {
+      "case_id": "red-stealthy__blue-s4",
+      "red_variant": "stealthy",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4"
+    }
+  ]
+}

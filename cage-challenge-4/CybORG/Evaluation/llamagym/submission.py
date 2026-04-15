@@ -103,7 +103,7 @@ class PhaseWrapper(BaseWrapper):
             if "blue" in agent
         }
 
-        self.metrics_callback.on_step(observations, actions, self.env)
+        self.metrics_callback.on_step(observations, actions, rewards, self.env)
 
         terminated = {agent: done for agent, done in dones.items() if "blue" in agent}
         truncated = {agent: done for agent, done in dones.items() if "blue" in agent}

@@ -70,7 +70,23 @@ class ModelManager:
         self.model_backend = BackendFactory.create_backend(self.backend_name, hyperparams)
         self.enable_schema_constraints = hyperparams.get("schema_constraints", True)
         self.enable_self_correction = hyperparams.get("self_correction", True)
+        self.enable_preventative_cosc = hyperparams.get("preventative_cosc", True)
         self.max_repair_attempts = int(hyperparams.get("repair_attempts", 1))
+        self.hallucination_metrics: dict[str, int] = {
+            "syntactic_hallucination_count": 0,
+            "semantic_hallucination_count": 0,
+            "repair_attempt_count": 0,
+            "repair_success_count": 0,
+            "fallback_sleep_count": 0,
+            "total_structured_calls": 0,
+        }
+
+    def get_hallucination_metrics(self) -> dict[str, int]:
+        return dict(self.hallucination_metrics)
+
+    def reset_hallucination_metrics(self):
+        for key in self.hallucination_metrics:
+            self.hallucination_metrics[key] = 0
     
     def generate_response(self, message: List[Dict[str, str]]) -> str:
         """Generates a response using the model backend."""
@@ -81,14 +97,24 @@ class ModelManager:
 
     def generate_structured_response(self, message: List[Dict[str, str]]) -> Dict[str, str]:
         """Generates a structured response with action and reason keys."""
+        self.hallucination_metrics["total_structured_calls"] += 1
         structured_messages = self._inject_structure_instruction(message)
+        ioc_priorities = self._extract_ioc_priorities_from_messages(structured_messages)
         raw_response = self.generate_response(structured_messages)
         parsed_response = self._parse_structured_payload(raw_response)
         if parsed_response is not None:
-            return parsed_response
+            is_valid, feedback = self._validate_action_against_ioc(parsed_response.get("action", ""), ioc_priorities)
+            if is_valid:
+                return parsed_response
+            self.hallucination_metrics["semantic_hallucination_count"] += 1
+            raw_response = json.dumps(parsed_response)
+        else:
+            self.hallucination_metrics["syntactic_hallucination_count"] += 1
+            feedback = "Invalid response structure."
 
         if self.enable_self_correction:
             for _ in range(self.max_repair_attempts):
+                self.hallucination_metrics["repair_attempt_count"] += 1
                 repair_messages = copy.deepcopy(structured_messages)
                 repair_messages.append({"role": "assistant", "content": raw_response})
                 repair_messages.append({
@@ -96,15 +122,112 @@ class ModelManager:
                     "content": (
                         "The previous response was invalid. Rewrite it as STRICT JSON with exactly "
                         "two keys: action and reason. Do not use markdown, bullets, code fences, or extra keys. "
-                        "Use only one allowed action and include host:<hostname> or subnet:<subnet_id> when required."
+                        "Use only one allowed action and include host:<hostname> or subnet:<subnet_id> when required. "
+                        f"Semantic verification feedback: {feedback}"
                     ),
                 })
                 raw_response = self.generate_response(repair_messages)
                 parsed_response = self._parse_structured_payload(raw_response)
                 if parsed_response is not None:
-                    return parsed_response
+                    is_valid, feedback = self._validate_action_against_ioc(
+                        parsed_response.get("action", ""), ioc_priorities
+                    )
+                    if is_valid:
+                        self.hallucination_metrics["repair_success_count"] += 1
+                        return parsed_response
+                    self.hallucination_metrics["semantic_hallucination_count"] += 1
+                else:
+                    self.hallucination_metrics["syntactic_hallucination_count"] += 1
 
+        self.hallucination_metrics["fallback_sleep_count"] += 1
         return {"action": "Sleep", "reason": "Model output was invalid; defaulted to Sleep."}
+
+    def _extract_ioc_priorities_from_messages(self, messages: List[Dict[str, str]]) -> dict[str, int]:
+        """Extract host IOC priorities from formatted observation text in recent user messages."""
+        host_priorities: dict[str, int] = {}
+        for msg in reversed(messages):
+            if msg.get("role") != "user":
+                continue
+            content = str(msg.get("content", ""))
+            if "# IOC SUMMARY" not in content:
+                continue
+            for line in content.splitlines():
+                line = line.strip()
+                m = re.search(r"Host:\s*([^|]+)\|.*IOC Priority:\s*(\d+)", line)
+                if not m:
+                    continue
+                host = m.group(1).strip().lower()
+                prio = int(m.group(2))
+                host_priorities[host] = prio
+            if host_priorities:
+                break
+        return host_priorities
+
+    def _validate_action_against_ioc(self, action: str, host_ioc: dict[str, int]) -> tuple[bool, str]:
+        """Preventative CoSC semantic validation using IOC-guided rules."""
+        if not self.enable_preventative_cosc:
+            return True, "Preventative CoSC disabled."
+        if not action:
+            return False, "Missing action field."
+        if not host_ioc:
+            return True, "No IOC summary available for semantic validation."
+
+        action_l = action.lower()
+        host_match = re.search(r"host\s*:\s*([a-z0-9_\-\.]+)", action_l)
+        target_host = host_match.group(1).strip().lower() if host_match else None
+
+        severe_hosts = [h for h, p in host_ioc.items() if p >= 2]
+        any_ioc = any(p >= 1 for p in host_ioc.values())
+
+        if severe_hosts and not any(k in action_l for k in ("remove", "restore")):
+            severe_host = severe_hosts[0]
+            return (
+                False,
+                f"Severe IOC detected on {severe_host}. Must use Remove/Restore on severe IOC host.",
+            )
+
+        if any(k in action_l for k in ("remove", "restore")):
+            if not target_host:
+                return False, "Remove/Restore requires host:<hostname> target."
+            host_prio = host_ioc.get(target_host)
+            if host_prio is None:
+                return False, f"Target host {target_host} not found in IOC summary."
+            if host_prio < 2:
+                return False, f"Target host {target_host} IOC priority is {host_prio}; recovery is not justified."
+
+        if not any_ioc and any(k in action_l for k in ("remove", "restore")):
+            return False, "No IOC detected; avoid recovery actions on clean state."
+
+        return True, "Semantic IOC validation passed."
+
+    def _infer_fallback_action(self, raw_response: str) -> dict[str, str] | None:
+        """Attempt to infer a valid action from raw LLM response text.
+        
+        Useful for recovering from parse failures by pattern-matching common action names.
+        Returns a dict with "action" and "reason" keys, or None if inference fails.
+        """
+        if not raw_response or not isinstance(raw_response, str):
+            return None
+        
+        response_lower = raw_response.lower()
+        
+        # Common keywords mapped to fallback actions
+        action_keywords = {
+            "remove": "Remove",
+            "restore": "Restore",
+            "block": "BlockTrafficZone",
+            "allow": "AllowTrafficZone",
+            "deploy": "DeployDecoy",
+            "analyse": "Analyse",
+            "analyze": "Analyse",
+            "sleep": "Sleep",
+        }
+        
+        for keyword, action in action_keywords.items():
+            if keyword in response_lower:
+                return {"action": action, "reason": "Inferred from response text after parse failure."}
+        
+        return None
 
     def _inject_structure_instruction(self, message: List[Dict[str, str]]) -> List[Dict[str, str]]:
         messages = copy.deepcopy(message)

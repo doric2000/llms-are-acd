@@ -1,0 +1,193 @@
+{
+  "generated_at": "2026-04-15T18:45:29",
+  "run_profile": {
+    "profile_name": "quick",
+    "strict_mode": false,
+    "strict_baseline": {
+      "max_eps": 2,
+      "episode_length": 500
+    },
+    "effective": {
+      "max_eps": 2,
+      "episode_length": 5,
+      "models": [
+        "deepseek-r1-1.5b"
+      ]
+    },
+    "matrix_mode": "paper",
+    "matrix_cases": [
+      {
+        "case_id": "red-aggressive__blue-s1",
+        "red_variant": "aggressive",
+        "scenario_seed": 101,
+        "scenario_id": "scenario_1"
+      },
+      {
+        "case_id": "red-aggressive__blue-s2",
+        "red_variant": "aggressive",
+        "scenario_seed": 102,
+        "scenario_id": "scenario_2"
+      },
+      {
+        "case_id": "red-aggressive__blue-s3",
+        "red_variant": "aggressive",
+        "scenario_seed": 103,
+        "scenario_id": "scenario_3"
+      },
+      {
+        "case_id": "red-aggressive__blue-s4",
+        "red_variant": "aggressive",
+        "scenario_seed": 104,
+        "scenario_id": "scenario_4"
+      },
+      {
+        "case_id": "red-stealthy__blue-s1",
+        "red_variant": "stealthy",
+        "scenario_seed": 101,
+        "scenario_id": "scenario_1"
+      },
+      {
+        "case_id": "red-stealthy__blue-s2",
+        "red_variant": "stealthy",
+        "scenario_seed": 102,
+        "scenario_id": "scenario_2"
+      },
+      {
+        "case_id": "red-stealthy__blue-s3",
+        "red_variant": "stealthy",
+        "scenario_seed": 103,
+        "scenario_id": "scenario_3"
+      },
+      {
+        "case_id": "red-stealthy__blue-s4",
+        "red_variant": "stealthy",
+        "scenario_seed": 104,
+        "scenario_id": "scenario_4"
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_count": 8,
+      "failed_case_count": 4,
+      "reward_mean": -0.875,
+      "reward_stdev": 0.6291528696058958,
+      "hallucination_rate": 0.28125
+    }
+  ],
+  "cases": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-aggressive__blue-s1",
+      "case_id": "red-aggressive__blue-s1",
+      "red_variant": "aggressive",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1",
+      "return_code": 0,
+      "elapsed": "0:00:13.248601",
+      "reward_mean": -1,
+      "reward_stdev": 1.4142135623730951,
+      "hallucination_rate": 0.0
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-aggressive__blue-s2",
+      "case_id": "red-aggressive__blue-s2",
+      "red_variant": "aggressive",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2",
+      "return_code": 0,
+      "elapsed": "0:00:17.948333",
+      "reward_mean": 0,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.625
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-aggressive__blue-s3",
+      "case_id": "red-aggressive__blue-s3",
+      "red_variant": "aggressive",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3",
+      "return_code": 0,
+      "elapsed": "0:00:14.032968",
+      "reward_mean": -1.5,
+      "reward_stdev": 0.7071067811865476,
+      "hallucination_rate": 0.25
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-aggressive__blue-s4",
+      "case_id": "red-aggressive__blue-s4",
+      "red_variant": "aggressive",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4",
+      "return_code": 1,
+      "elapsed": null,
+      "reward_mean": null,
+      "reward_stdev": null,
+      "hallucination_rate": null
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-stealthy__blue-s1",
+      "case_id": "red-stealthy__blue-s1",
+      "red_variant": "stealthy",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1",
+      "return_code": 1,
+      "elapsed": null,
+      "reward_mean": null,
+      "reward_stdev": null,
+      "hallucination_rate": null
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-stealthy__blue-s2",
+      "case_id": "red-stealthy__blue-s2",
+      "red_variant": "stealthy",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2",
+      "return_code": 1,
+      "elapsed": null,
+      "reward_mean": null,
+      "reward_stdev": null,
+      "hallucination_rate": null
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-stealthy__blue-s3",
+      "case_id": "red-stealthy__blue-s3",
+      "red_variant": "stealthy",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3",
+      "return_code": 0,
+      "elapsed": "0:00:14.649161",
+      "reward_mean": -1,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.25
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_184218/deepseek-r1-1.5b/red-stealthy__blue-s4",
+      "case_id": "red-stealthy__blue-s4",
+      "red_variant": "stealthy",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4",
+      "return_code": 1,
+      "elapsed": null,
+      "reward_mean": null,
+      "reward_stdev": null,
+      "hallucination_rate": null
+    }
+  ]
+}

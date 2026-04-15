@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-04-15T18:38:33",
+  "run_profile": {
+    "profile_name": "quick",
+    "strict_mode": false,
+    "strict_baseline": {
+      "max_eps": 2,
+      "episode_length": 500
+    },
+    "effective": {
+      "max_eps": 2,
+      "episode_length": 5,
+      "models": [
+        "dummy"
+      ]
+    },
+    "matrix_mode": "none",
+    "matrix_cases": [
+      {
+        "case_id": "single",
+        "red_variant": "finite_state",
+        "scenario_seed": null,
+        "scenario_id": null
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "dummy",
+      "case_count": 1,
+      "failed_case_count": 0,
+      "reward_mean": 0,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.0
+    }
+  ],
+  "cases": [
+    {
+      "name": "dummy",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/dummy.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_183816/dummy/single",
+      "case_id": "single",
+      "red_variant": "finite_state",
+      "scenario_seed": null,
+      "scenario_id": null,
+      "return_code": 0,
+      "elapsed": "0:00:02.018524",
+      "reward_mean": 0,
+      "reward_stdev": 0.0,
+      "hallucination_rate": 0.0
+    }
+  ]
+}

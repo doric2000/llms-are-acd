@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import time
 
 from ray.rllib.policy.policy import Policy
 import tqdm
@@ -48,12 +50,66 @@ class LLMDefenderPolicy(Policy):
         self.commvector_rules_prompt = []
         self.current_episode_messages = []
         self.last_action: str = None
+        self.step_trace_path = os.environ.get("CAGE4_STEP_TRACE_PATH")
+        self.episode_len = int(os.environ.get("CAGE_EPISODE_LENGTH", "500"))
         
         self._load_all_prompts()
         
-        # TODO: Fix this progress bar with the correct number of steps
+        # Use runtime experiment settings when provided by the runner.
+        max_eps = int(os.environ.get("CAGE4_MAX_EPS", "2"))
+        episode_len = int(os.environ.get("CAGE_EPISODE_LENGTH", "500"))
+        progress_total = max_eps * episode_len
+        if progress_total <= 0:
+            progress_total = TOTAL_STEPS_PROGRESS_BAR
+
         self.step = 0
-        self.progress_bar = tqdm.tqdm(total=TOTAL_STEPS_PROGRESS_BAR, desc="Steps")
+        self.progress_bar = tqdm.tqdm(total=progress_total, desc="Steps")
+
+    def _extract_max_ioc_priority(self, obs_message: str) -> int | None:
+        priorities = [int(p) for p in re.findall(r"IOC Priority:\\s*(\\d+)", obs_message)]
+        if not priorities:
+            return None
+        return max(priorities)
+
+    def _append_step_trace(
+        self,
+        obs_message: str,
+        structured_response: dict,
+        final_action_name: str,
+        latency_ms: float,
+    ) -> None:
+        step_trace_path = getattr(self, "step_trace_path", os.environ.get("CAGE4_STEP_TRACE_PATH"))
+        episode_len = int(getattr(self, "episode_len", os.environ.get("CAGE_EPISODE_LENGTH", "500")))
+
+        if not step_trace_path:
+            return
+
+        action_text = str(structured_response.get("action", ""))
+        reason_text = str(structured_response.get("reason", ""))
+        max_ioc_priority = self._extract_max_ioc_priority(obs_message)
+        action_lower = action_text.lower()
+        false_positive_flag = (
+            ("restore" in action_lower or "remove" in action_lower)
+            and (max_ioc_priority is None or max_ioc_priority < 2)
+        )
+
+        payload = {
+            "agent": self.name,
+            "step_global": self.step + 1,
+            "episode_estimate": (self.step // max(episode_len, 1)) + 1,
+            "latency_ms": round(latency_ms, 3),
+            "action_raw": action_text,
+            "action_final": final_action_name,
+            "reason": reason_text,
+            "max_ioc_priority": max_ioc_priority,
+            "potential_false_positive": false_positive_flag,
+        }
+
+        try:
+            with open(step_trace_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
     
     def _load_all_prompts(self):
         """
@@ -200,11 +256,13 @@ class LLMDefenderPolicy(Policy):
     def compute_single_action(self, obs=None, prev_action=None, **kwargs):
         """Process a single observation and return corresponding action."""
         #TODO: This is currently sending all the prompts in the config file every episode. 
-        Logger.new_episode()
+        if self.step == 0:
+            Logger.new_episode()
         obs_message = obs_formatter.format_observation(obs, self.last_action, self.name)
         self.current_episode_messages = []
         response = ""
         structured_response = {"action": "Sleep", "reason": "Model output unavailable"}
+        inference_latency_ms = 0.0
         
         if self.prompts:
             self.current_episode_messages.append(self.prompts[0])
@@ -213,7 +271,9 @@ class LLMDefenderPolicy(Policy):
             if INCLUDE_PROMPT_COMMVECTOR_RULES:
                 self.current_episode_messages.append(self.commvector_rules_prompt[0])
             self.current_episode_messages.append({"role": "user", "content": obs_message})
+            t0 = time.perf_counter()
             structured_response = self.model_manager.generate_structured_response(self.current_episode_messages)
+            inference_latency_ms += (time.perf_counter() - t0) * 1000.0
             response = json.dumps(structured_response, ensure_ascii=False)
 
         # If there are multiple prompts, continue the conversation
@@ -223,7 +283,9 @@ class LLMDefenderPolicy(Policy):
                 assistant_response = {"role": "assistant", "content": response} # Save the previous assistant response
                 self.current_episode_messages.append(assistant_response)
                 self.current_episode_messages.append(prompt)
+                t0 = time.perf_counter()
                 structured_response = self.model_manager.generate_structured_response(self.current_episode_messages)
+                inference_latency_ms += (time.perf_counter() - t0) * 1000.0
                 response = json.dumps(structured_response, ensure_ascii=False)
 
         # Save the final assistant response
@@ -253,6 +315,7 @@ class LLMDefenderPolicy(Policy):
 
         # Log the final action
         Logger.success(f"Final action: {action.__class__.__name__}")
+        self._append_step_trace(obs_message, structured_response, action.__class__.__name__, inference_latency_ms)
 
         self.step += 1
         self.progress_bar.update(1)

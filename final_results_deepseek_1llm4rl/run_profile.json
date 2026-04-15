@@ -1,0 +1,24 @@
+{
+  "profile_name": "strict",
+  "strict_mode": true,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 2,
+    "episode_length": 500,
+    "models": [
+      "deepseek-r1-1.5b"
+    ]
+  },
+  "matrix_mode": "none",
+  "matrix_cases": [
+    {
+      "case_id": "single",
+      "red_variant": "finite_state",
+      "scenario_seed": 101,
+      "scenario_id": "single"
+    }
+  ]
+}
