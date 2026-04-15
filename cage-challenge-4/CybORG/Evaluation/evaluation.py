@@ -48,6 +48,12 @@ def _strict_baseline_guard(max_eps: int, episode_length: int):
 
 def _resolve_red_agent_variant() -> tuple[str, type]:
     variant = os.environ.get("CAGE4_RED_AGENT_VARIANT", "finite_state").strip().lower()
+    alias_map = {
+        "b_line": "aggressive",
+        "bline": "aggressive",
+        "meander": "stealthy",
+    }
+    variant = alias_map.get(variant, variant)
     red_variant_to_class = {
         "finite_state": FiniteStateRedAgent,
         "aggressive": AggressiveFSMAgent,

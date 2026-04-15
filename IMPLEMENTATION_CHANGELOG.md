@@ -544,6 +544,65 @@ Restart the entire comparison pipeline from scratch and align execution/logging 
 - Active run: DeepSeek, case `red-aggressive__blue-s1`.
 - New artifacts are being written from run start.
 
+## Step 10: Paper-Term Alignment (B-Line/Meander) + Final Trace Hardening
+
+Date: 2026-04-15
+Status: Implemented
+
+### Objective
+
+Align CLI/runtime terminology with the original paper naming (B-Line / Meander) while preserving compatibility with existing red variants (`aggressive` / `stealthy`) and ensure all required step-level artifacts are persisted.
+
+### What Was Implemented
+
+1. Added paper-term aliases for red attackers:
+- `b_line` and `bline` -> `aggressive`
+- `meander` -> `stealthy`
+
+2. Added alias support in both layers (runner + evaluator):
+- Runner accepts paper terms from command line and normalizes internally.
+- Evaluation resolver accepts paper terms from env and maps to existing red agent classes.
+
+3. Clarified and stabilized run observability:
+- Progress total uses runtime settings (`max_eps * episode_length`) so 30x30 displays as 900.
+- Episode banner logging only at episode boundary.
+- Added per-step traces:
+   - `step_trace.jsonl`: action, reason, latency, IOC max priority, potential false-positive flag
+   - `metrics_trace.jsonl`: reward per step, cumulative reward, episode/step index
+
+4. Defensive runtime fix:
+- Step trace writer now safely falls back to env paths if policy attributes are missing in alternate policy paths.
+
+5. Clean restart for comparable artifacts:
+- Restarted full matrix from scratch under:
+   - `/home/dor/llms-are-acd/paper_parity_matrix/full_restart`
+- Configuration:
+   - Models: DeepSeek then Qwen
+   - Attackers: Aggressive + Stealthy (paper aliases now supported as B-Line + Meander)
+   - Seeds: 101, 102, 103, 104
+   - Episodes x Steps: 30 x 30
+
+### Files Updated in Step 10
+
+1. `CybORG/Evaluation/llamagym/run_model_comparison.py`
+- Added red-variant alias normalization (`b_line`/`meander` support)
+- Updated help text to include alias mapping
+
+2. `cage-challenge-4/CybORG/Evaluation/evaluation.py`
+- Added alias mapping in red-variant resolver
+
+3. `CybORG/Agents/LLMAgents/llm_policy.py`
+- Defensive trace path fallback in step-trace writer
+
+4. `cage-challenge-4/CybORG/Agents/LLMAgents/llm_policy.py`
+- Defensive trace path fallback in step-trace writer
+
+### Validation Notes
+
+- Alias-support files pass static error checks in editor diagnostics.
+- Case directories show expected run artifacts (`run_profile.json`, `stdout.log`, and trace files during active steps).
+- Apparent progress-bar "reset" between cases is expected matrix behavior (case transition), not data loss.
+
 
 ## Step 8: Full Paper-Matrix Sweep (2 Red Variants × 4 Scenario Seeds = 8 Cases)
 

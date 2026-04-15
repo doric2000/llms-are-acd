@@ -44,6 +44,12 @@ RED_VARIANT_TO_CLASS = {
     "degrade_service": "DegradeServiceFSMAgent",
 }
 
+RED_VARIANT_ALIASES = {
+    "b_line": "aggressive",
+    "bline": "aggressive",
+    "meander": "stealthy",
+}
+
 
 def _resolve_defaults() -> tuple[Path, Path, Path, Path, list[str]]:
     repo_root = Path(__file__).resolve().parents[3]
@@ -110,6 +116,7 @@ def _parse_csv(values: str | None) -> list[str]:
 
 def _resolve_red_variants(args: argparse.Namespace) -> list[str]:
     variants = _parse_csv(args.red_variants)
+    variants = [RED_VARIANT_ALIASES.get(v, v) for v in variants]
     if not variants:
         if args.matrix == "paper":
             variants = list(RED_VARIANT_TO_CLASS.keys())
@@ -488,6 +495,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Comma-separated red variants: "
             "finite_state,aggressive,stealthy,impact,degrade_service. "
+            "Aliases: b_line->aggressive, meander->stealthy. "
             "Default in --matrix paper is all variants."
         ),
     )
