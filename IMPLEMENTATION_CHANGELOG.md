@@ -471,6 +471,105 @@ Added missing `_infer_fallback_action()` method to ModelManager to handle gracef
 **Timestamp:** 2026-04-15 18:27:00 UTC  
 **Session:** Full paper-matrix validation with real LLM (deepseek-r1-1.5b)
 
+## Step 11: Paper-Ready Methodology Mapping (Castro et al. Alignment)
+
+Date: 2026-04-15  
+Status: Implemented (Documentation + execution protocol aligned)
+
+### Why This Step Was Added
+
+This section provides a clear, publication-ready mapping between our implementation and the methodology reported in:
+
+`Castro et al., Large Language Models are Autonomous Cyber Defenders (arXiv:2505.04843)`
+
+### Exact Mapping to Original Paper
+
+1. **Hybrid Team Architecture (1 LLM + 4 RL)**
+- Paper: one LLM defender working with four RL defenders.
+- Implementation: `ALL_LLM_AGENTS=False` and `BLUE_AGENT_NAME=blue_agent_4`, with the other four as `ReactRemoveBlueAgent`.
+- Result: architecture matches the paper's mixed-team setting.
+
+2. **LLM Decision Loop (Text observation -> JSON action+reason)**
+- Paper: LLM receives formatted observation and returns structured decision.
+- Implementation: `LLMDefenderPolicy` builds prompt+observation and enforces structured response handling in `ModelManager`.
+- Result: same strategic decision-maker role for the LLM.
+
+3. **Red Attacker Terminology Alignment (B-Line/Meander)**
+- Paper wording: `B-Line` and `Meander` attackers.
+- Repository classes: `AggressiveFSMAgent` and `StealthyFSMAgent`.
+- Implementation update: added aliases:
+   - `b_line`/`bline` -> `aggressive`
+   - `meander` -> `stealthy`
+- Result: command-line and reporting can now use paper terminology directly.
+
+4. **Evaluation Volume for Comparison Batch**
+- Requested comparison setup: `30 episodes x 30 steps` per case.
+- Implementation: runner supports `--max-eps 30 --episode-length 30` under profile `quick`.
+- Result: consistent repeated short-horizon evaluation for both models.
+
+5. **Matrix Factors Used for Fair Comparison**
+- Models: `deepseek-r1-1.5b`, `qwen2.5-7b`.
+- Attackers: `aggressive` + `stealthy` (paper aliases available: `b_line` + `meander`).
+- Seeds: `101,102,103,104`.
+- Result: balanced matrix for cross-model and cross-scenario robustness.
+
+### Reliability and Reproducibility Fixes Introduced
+
+1. **Episode banner fix**
+- Problem: "Starting new episode" printed per action call.
+- Fix: print only when `self.step == 0`.
+- Benefit: logs now reflect real episode boundaries.
+
+2. **Progress bar correctness**
+- Problem: hardcoded `1000` total steps caused confusion.
+- Fix: runtime total = `CAGE4_MAX_EPS * CAGE_EPISODE_LENGTH`.
+- Benefit: 30x30 runs now display `900` expected calls.
+
+3. **Graceful fallback on malformed LLM output**
+- Added `_infer_fallback_action()` and robust structured parsing/repair fallback.
+- Benefit: long matrix runs continue without crashing on parse anomalies.
+
+### Required Research Artifacts Now Persisted
+
+For each case directory, output includes:
+
+1. `summary.json` / `summary.txt`
+- aggregate reward and evaluation summary.
+
+2. `stdout.log` / `stderr.log`
+- full run logs for audit/replay.
+
+3. `step_trace.jsonl`
+- per-step LLM trace including:
+   - action text
+   - reason text
+   - inference latency (ms)
+   - derived max IOC priority from observation
+   - potential false-positive flag (recovery action with low/no IOC)
+
+4. `metrics_trace.jsonl`
+- per-step reward totals and cumulative reward trajectory.
+
+5. `run_profile.json`
+- run configuration metadata (episodes/steps/profile/model/case metadata).
+
+### Important Interpretation Note (About "reset" behavior)
+
+Observed behavior where progress appears to "restart" is typically a **case transition** in matrix mode, not loss of progress.
+
+- Completed cases contain `summary.json` and full artifacts.
+- New case folder starts with logs/traces and later receives `summary.json` on completion.
+
+### Current Comparative Run State
+
+- A clean full restart was initiated under:
+   - `/home/dor/llms-are-acd/paper_parity_matrix/full_restart`
+- Execution order:
+   1. DeepSeek full case set
+   2. Qwen full case set
+- This ensures same protocol and artifact schema for both models before cross-paper analysis.
+
+
 ## Step 9: Protocol Alignment + Full Clean Restart for Model Comparison
 
 Date: 2026-04-15
