@@ -18,12 +18,13 @@ prompts:
       Review examples from `## EXAMPLE RESPONSES` if you are unsure.
 
        ## AVAILABLE ACTIONS
-      - Remove host:<hostname>: Attempting to remove red from a host by destroying MALICIOUS PROCESSES, files and services. This action attempts to stop all processes identified as malicious by the monitor action.
-      - Restore host:<hostname>: Restoring a system to a known good state. This has significant consequences for system availability. Ideal when detecting MALICIOUS PROCESSES with a high-level compromise.
-      - BlockTrafficZone subnet:<subnet_id>: Block traffic to/from a subnet. If green agents are attempting to communicate to that zone this will result in availability issues.
-      - AllowTrafficZone subnet:<subnet_id>: Allow traffic to/from a subnet. Only works if the zone is currently blocked.
-      - DeployDecoy host:<hostname>: Setup of a decoy service on a specified host. Green agents do not access these services, so any access is an unambiguous indicator of red activity. Decoy services cannot replace legitimate services. When a red agent discovers or exploits a decoy service, the blue agent will receive alerts involving that host or service. The red agent will not be able to successfully exploit the decoy service.
-      - Analyse host:<hostname>: Analyze a host for suspicious activity. Collection of further information relating to malware, on a specific host to enable blue to better identify if red is present on the system. Analyse should be executed when it is suspected that red agents have been active on the network.  
+      - Remove host:<hostname>: Kill malicious processes and files from a host. Use when red agent detected.
+      - Restore host:<hostname>: Reset host to known-good state. Use for critical compromises (privileged escalation).
+      - BlockTrafficZone subnet:<subnet_id>: Block incoming/outgoing traffic to/from subnet. Isolates zone but impacts green services.
+      - AllowTrafficZone subnet:<subnet_id>: Unblock a subnet. Only works if zone is currently blocked.
+      - DeployDecoy host:<hostname>: Deploy a fake service to detect red activity. Any red access = alert.
+      - Analyse host:<hostname>: Gather intel on host compromise level. Use when uncertain about threat level.
+      - Sleep: Defensive hold—take no action this step. Use when no immediate threat detected.  
 
       ## EXAMPLE RESPONSES
       - Example 1:

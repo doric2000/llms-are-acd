@@ -7,6 +7,7 @@ from CybORG.Agents.LLMAgents.config.config_vars import CONFIG_MODEL_PATH, ENV_VA
 
 import json
 import os
+import re
 
 
 class LLMDefenderPolicy(Policy):
@@ -133,17 +134,26 @@ class LLMDefenderPolicy(Policy):
                 response_action = lower_response.split("action:", 1)[1].split("\n", 1)[0].strip().strip('"')
             else:
                 response_action = lower_response
-            lower_response_action = response_action.lower()
+            lower_response_action = response_action.lower().replace("`", " ").replace("*", " ").strip()
+            lower_response_action = re.sub(r"\s+", " ", lower_response_action)
 
             hostname = None
             target_subnet = None
 
             if "host:" in lower_response_action:
-                hostname = lower_response_action.split("host:")[1].split()[0].strip().strip('"')
+                host_match = re.search(r"host:\s*([a-z0-9_\-\s\.]+)", lower_response_action)
+                if host_match:
+                    raw_hostname = host_match.group(1).strip().strip('"').strip("'")
+                    raw_hostname = re.sub(r"\s+", "_", raw_hostname)
+                    hostname = raw_hostname.split(",", 1)[0].split("}", 1)[0].strip("._")
                 Logger.debug(f"Extracted hostname: {hostname}")
 
             if "subnet:" in lower_response_action:
-                target_subnet = lower_response_action.split("subnet:")[1].split()[0].strip().strip('"')
+                subnet_match = re.search(r"subnet:\s*([a-z0-9_\-\s\.]+)", lower_response_action)
+                if subnet_match:
+                    raw_subnet = subnet_match.group(1).strip().strip('"').strip("'")
+                    raw_subnet = re.sub(r"\s+", "_", raw_subnet)
+                    target_subnet = raw_subnet.split(",", 1)[0].split("}", 1)[0].strip("._")
                 Logger.debug(f"Extracted subnet: {target_subnet}")
 
             if "remove" in lower_response_action and hostname:
@@ -184,6 +194,7 @@ class LLMDefenderPolicy(Policy):
 
             elif (
                 "sleep" in lower_response_action
+                or "none" in lower_response_action
                 or "wait" in lower_response_action
                 or "idle" in lower_response_action
                 or "no action" in lower_response_action
@@ -402,7 +413,8 @@ class LLMDefenderPolicy(Policy):
                     response_action = lower_response
                 response_reason = ""
 
-            lower_response_action = response_action.lower()
+            lower_response_action = response_action.lower().replace("`", " ").replace("*", " ").strip()
+            lower_response_action = re.sub(r"\s+", " ", lower_response_action)
             
             # Initialize parameters
             hostname = None
@@ -410,12 +422,20 @@ class LLMDefenderPolicy(Policy):
 
             # Extract hostname parameter
             if "host:" in lower_response_action:
-                hostname = lower_response_action.split("host:")[1].split()[0].strip().strip('"')
+                host_match = re.search(r"host:\s*([a-z0-9_\-\s\.]+)", lower_response_action)
+                if host_match:
+                    raw_hostname = host_match.group(1).strip().strip('"').strip("'")
+                    raw_hostname = re.sub(r"\s+", "_", raw_hostname)
+                    hostname = raw_hostname.split(",", 1)[0].split("}", 1)[0].strip("._")
                 Logger.debug(f"Extracted hostname: {hostname}")
 
             # Extract subnet parameter
             if "subnet:" in lower_response_action:
-                target_subnet = lower_response_action.split("subnet:")[1].split()[0].strip().strip('"')
+                subnet_match = re.search(r"subnet:\s*([a-z0-9_\-\s\.]+)", lower_response_action)
+                if subnet_match:
+                    raw_subnet = subnet_match.group(1).strip().strip('"').strip("'")
+                    raw_subnet = re.sub(r"\s+", "_", raw_subnet)
+                    target_subnet = raw_subnet.split(",", 1)[0].split("}", 1)[0].strip("._")
                 Logger.debug(f"Extracted subnet: {target_subnet}")
 
             # Map actions to their required parameters
@@ -462,6 +482,7 @@ class LLMDefenderPolicy(Policy):
                 return Analyse(session=0, agent=self.name, hostname=hostname)
             elif (
                 "sleep" in lower_response_action
+                or "none" in lower_response_action
                 or "wait" in lower_response_action
                 or "idle" in lower_response_action
                 or "no action" in lower_response_action

@@ -64,6 +64,16 @@ class ModelManager:
 		"The reason value must be a short explanation. Return JSON only."
 	)
 
+	ACTION_SYNONYMS: dict[str, list[str]] = {
+		"remove": ["remove"],
+		"restore": ["restore"],
+		"blocktrafficzone": ["blocktrafficzone", "block traffic zone", "block traffic"],
+		"allowtrafficzone": ["allowtrafficzone", "allow traffic zone", "allow traffic"],
+		"deploydecoy": ["deploydecoy", "deploy decoy", "decoy"],
+		"analyse": ["analyse", "analyze", "analysis"],
+		"sleep": ["sleep", "wait", "idle", "none", "no action"],
+	}
+
 	def __init__(self, hyperparams: dict):
 		self.hyperparams = hyperparams
 		self.backend_name = hyperparams["backend"].lower()
@@ -81,7 +91,7 @@ class ModelManager:
 			return '{"action": "Sleep", "reason": "Model request failed; defaulted to Sleep."}'
 
 	def generate_structured_response(self, message: List[Dict[str, str]]) -> Dict[str, str]:
-		"""Generates a structured response with action/reason keys."""
+		"""Generates a structured response with action/reason keys, with intelligent fallback pool."""
 		structured_messages = self._inject_structure_instruction(message)
 		raw_response = self.generate_response(structured_messages)
 		parsed_response = self._parse_structured_payload(raw_response)
@@ -95,8 +105,9 @@ class ModelManager:
 				repair_messages.append({
 					"role": "user",
 					"content": (
-						"The previous response was invalid. Rewrite it as a valid JSON object "
-						"with keys action and reason only."
+						"The previous response was invalid. Rewrite it as STRICT JSON with exactly "
+						"two keys: action and reason. Do not use markdown, bullets, code fences, or extra keys. "
+						"Use only one allowed action and include host:<hostname> or subnet:<subnet_id> when required."
 					),
 				})
 				raw_response = self.generate_response(repair_messages)
@@ -104,6 +115,11 @@ class ModelManager:
 				if parsed_response is not None:
 					return parsed_response
 
+		# Intelligent fallback pool: try to infer a reasonable action from raw response
+		inferred = self._infer_fallback_action(raw_response)
+		if inferred:
+			return inferred
+		
 		return {"action": "Sleep", "reason": "Model output was invalid; defaulted to Sleep."}
 
 	def _inject_structure_instruction(self, message: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -123,7 +139,9 @@ class ModelManager:
 			action = str(response.get("action", "")).strip()
 			reason = str(response.get("reason", "")).strip()
 			if action:
-				return {"action": action, "reason": reason}
+				action_cleaned = self._normalize_action(action)
+				if action_cleaned:
+					return {"action": action_cleaned, "reason": reason}
 			return None
 
 		if not isinstance(response, str):
@@ -144,7 +162,9 @@ class ModelManager:
 						action = str(parsed.get("action", "")).strip()
 						reason = str(parsed.get("reason", "")).strip()
 						if action:
-							return {"action": action, "reason": reason}
+							action_cleaned = self._normalize_action(action)
+							if action_cleaned:
+								return {"action": action_cleaned, "reason": reason}
 				except Exception:
 					continue
 
@@ -154,5 +174,80 @@ class ModelManager:
 			action = action_match.group(1).strip().strip("\"'")
 			reason = reason_match.group(1).strip().strip("\"'") if reason_match else ""
 			return {"action": action, "reason": reason}
+
+		heuristic = self._extract_action_heuristic(text)
+		if heuristic:
+			return heuristic
+
+		return None
+
+	def _normalize_action(self, action_str: str) -> str | None:
+		"""Normalize and validate action strings; strip markdown/formatting and extract canonical action.
+		
+		Returns the action name (e.g., 'Remove host:HOSTNAME') or None if invalid.
+		"""
+		# Clean markdown and excessive whitespace
+		clean = action_str.lower().replace("`", " ").replace("*", " ")
+		clean = re.sub(r"\s+", " ", clean).strip()
+		
+		# Try to match against known action synonyms
+		for canonical, aliases in self.ACTION_SYNONYMS.items():
+			for alias in aliases:
+				if alias in clean:
+					# Extract parameters from original action_str (to preserve case/format)
+					host_match = re.search(r"host\s*:\s*([a-z0-9_\-\.]+)", clean, re.IGNORECASE)
+					subnet_match = re.search(r"subnet\s*:\s*([a-z0-9_\-\.]+)", clean, re.IGNORECASE)
+					hostname = host_match.group(1) if host_match else None
+					subnet_id = subnet_match.group(1) if subnet_match else None
+					
+					# Return formatted action with proper capitalization
+					action_name = canonical
+					if action_name == "blocktrafficzone":
+						action_name = "BlockTrafficZone"
+					elif action_name == "allowtrafficzone":
+						action_name = "AllowTrafficZone"
+					elif action_name == "deploydecoy":
+						action_name = "DeployDecoy"
+					elif action_name == "sleep":
+						action_name = "Sleep"
+					else:
+						action_name = action_name.capitalize()
+					
+					# Append parameters if present
+					if hostname:
+						return f"{action_name} host:{hostname}"
+					elif subnet_id:
+						return f"{action_name} subnet:{subnet_id}"
+					else:
+						return action_name
+		
+		return None
+
+	def _extract_action_heuristic(self, text: str) -> Dict[str, str] | None:
+		"""Recover action/reason from non-JSON model replies."""
+		clean_text = text.lower().replace("`", " ").replace("*", " ")
+		clean_text = re.sub(r"\s+", " ", clean_text).strip()
+
+		host_match = re.search(r"host\s*:\s*([a-z0-9_\-\.]+)", clean_text)
+		subnet_match = re.search(r"subnet\s*:\s*([a-z0-9_\-\.]+)", clean_text)
+		hostname = host_match.group(1) if host_match else None
+		subnet = subnet_match.group(1) if subnet_match else None
+
+		for canonical, aliases in self.ACTION_SYNONYMS.items():
+			if any(alias in clean_text for alias in aliases):
+				if canonical == "remove" and hostname:
+					return {"action": f"Remove host:{hostname}", "reason": "Recovered from non-JSON response."}
+				if canonical == "restore" and hostname:
+					return {"action": f"Restore host:{hostname}", "reason": "Recovered from non-JSON response."}
+				if canonical == "deploydecoy" and hostname:
+					return {"action": f"DeployDecoy host:{hostname}", "reason": "Recovered from non-JSON response."}
+				if canonical == "analyse" and hostname:
+					return {"action": f"Analyse host:{hostname}", "reason": "Recovered from non-JSON response."}
+				if canonical == "blocktrafficzone" and subnet:
+					return {"action": f"BlockTrafficZone subnet:{subnet}", "reason": "Recovered from non-JSON response."}
+				if canonical == "allowtrafficzone" and subnet:
+					return {"action": f"AllowTrafficZone subnet:{subnet}", "reason": "Recovered from non-JSON response."}
+				if canonical == "sleep":
+					return {"action": "Sleep", "reason": "Recovered from non-JSON response."}
 
 		return None

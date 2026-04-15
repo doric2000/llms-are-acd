@@ -26,15 +26,34 @@ class ModelRunResult:
     reward_stdev: float | None
 
 
-def _resolve_defaults() -> tuple[Path, Path, Path, list[tuple[str, Path]]]:
+def _resolve_defaults() -> tuple[Path, Path, Path, Path, list[str]]:
     repo_root = Path(__file__).resolve().parents[3]
     eval_workspace = repo_root / "cage-challenge-4"
     submission_path = eval_workspace / "CybORG" / "Evaluation" / "llamagym"
-    models = [
-        ("deepseek-r1-1.5b", repo_root / "CybORG" / "Agents" / "LLMAgents" / "config" / "model" / "deepseek-r1-1.5b.yml"),
-        ("gemma4-e4b", repo_root / "CybORG" / "Agents" / "LLMAgents" / "config" / "model" / "gemma4-e4b.yml"),
-    ]
-    return repo_root, eval_workspace, submission_path, models
+    model_config_dir = repo_root / "CybORG" / "Agents" / "LLMAgents" / "config" / "model"
+    default_models = ["deepseek-r1-1.5b", "gemma4-e4b"]
+    return repo_root, eval_workspace, submission_path, model_config_dir, default_models
+
+
+def _resolve_models(model_config_dir: Path, model_names: list[str]) -> list[tuple[str, Path]]:
+    models: list[tuple[str, Path]] = []
+    missing: list[str] = []
+    for model_name in model_names:
+        cfg_path = model_config_dir / f"{model_name}.yml"
+        if cfg_path.exists():
+            models.append((model_name, cfg_path))
+        else:
+            missing.append(model_name)
+
+    if missing:
+        available = sorted(p.stem for p in model_config_dir.glob("*.yml"))
+        raise ValueError(
+            "Unknown model config(s): "
+            + ", ".join(missing)
+            + ". Available configs: "
+            + ", ".join(available)
+        )
+    return models
 
 
 def _run_single_model(
@@ -238,6 +257,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wandb-mode", type=str, default="offline", choices=["offline", "online"], help="Weights & Biases mode.")
     parser.add_argument("--wandb-entity", type=str, default=None, help="Optional wandb entity.")
     parser.add_argument(
+        "--models",
+        type=str,
+        default=None,
+        help="Comma-separated model config names (without .yml), e.g. deepseek-r1-1.5b,qwen2.5-7b",
+    )
+    parser.add_argument(
         "--output-root",
         type=str,
         default=None,
@@ -248,7 +273,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    repo_root, eval_workspace, submission_path, models = _resolve_defaults()
+    repo_root, eval_workspace, submission_path, model_config_dir, default_model_names = _resolve_defaults()
+
+    requested_model_names = default_model_names
+    if args.models:
+        requested_model_names = [m.strip() for m in args.models.split(",") if m.strip()]
+        if not requested_model_names:
+            raise ValueError("--models was provided but no valid model names were found")
+    models = _resolve_models(model_config_dir, requested_model_names)
 
     max_eps = 2 if args.quick else args.max_eps
     if max_eps < 2:

@@ -1,0 +1,9 @@
+CybORG v4.0, Scenario4
+Author: LLM and RL Agent, Team: UCSC Autonomous Cybersecurity Lab, Technique: LLM+RL
+Average reward is: 0 with a standard deviation of 0.0
+actions: [],
+ observations: [],
+ total reward: 0
+actions: [],
+ observations: [],
+ total reward: 0

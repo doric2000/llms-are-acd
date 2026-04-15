@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-04-15T15:29:23",
+  "models": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_152828/deepseek-r1-1.5b",
+      "return_code": 0,
+      "elapsed": "0:00:05.466539",
+      "reward_mean": 0,
+      "reward_stdev": 0.0
+    },
+    {
+      "name": "gemma4-e4b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/gemma4-e4b.yml",
+      "output_dir": "/home/dor/llms-are-acd/.dist/llm_compare/20260415_152828/gemma4-e4b",
+      "return_code": 0,
+      "elapsed": "0:00:13.322228",
+      "reward_mean": 0,
+      "reward_stdev": 0.0
+    }
+  ]
+}

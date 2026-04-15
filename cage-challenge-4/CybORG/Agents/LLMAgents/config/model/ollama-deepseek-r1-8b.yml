@@ -1,6 +1,6 @@
 backend: "ollama"
 model_name: "deepseek-r1:1.5b"
-base_url: "http://10.100.102.201:11434/v1"
+base_url: "http://10.100.102.201:11435/v1"
 seed: 42069
 episodes: 1000
 generate:

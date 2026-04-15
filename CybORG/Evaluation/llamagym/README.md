@@ -15,7 +15,7 @@ wandb login
 ```
 5. Change the model and prompts to the paths you want to use in `llm_policy.yml::MODEL_CONFIG` and `llm_policy.yml::PROMPTS_CONFIG`
     - For this experiment, use `CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml` and `CybORG/Agents/LLMAgents/config/model/gemma4-e4b.yml`.
-    - Both configs use the Ollama backend, and the previously defined server IP is `http://10.100.102.201:11434/v1`.
+    - Both configs use the Ollama backend, and the server IP is `http://10.100.102.201:11435/v1`.
 
 6. Modify the execution variables if needed in `CybORG/Agents/LLMAgents/config/config_vars.py`. Current variables are:
 ```python
