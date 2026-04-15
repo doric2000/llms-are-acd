@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+import os
+from typing import Dict, List
+
 from openai import OpenAI
-from typing import List, Dict
+
 from CybORG.Agents.LLMAgents.llm_adapter.backend.model_backend import ModelBackend
 import weave
 
@@ -8,7 +13,7 @@ class OpenAIBackend(ModelBackend):
     """OpenAI model backend."""
 
     def __init__(self, hyperparams: dict, api_key: str):
-        self.openai_client = OpenAI(api_key=api_key) 
+        self.openai_client = OpenAI(api_key=api_key, base_url=hyperparams.get("base_url", os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))) 
         self.model_name = hyperparams["model_name"].lower()
         self.temperature = hyperparams["generate"]["temperature"]
         self.max_tokens = hyperparams["generate"]["max_new_tokens"]
@@ -30,7 +35,7 @@ class NewOpenAIBackend(ModelBackend):
     """OpenAI model backend for new models"""
 
     def __init__(self, hyperparams: dict, api_key: str):
-        self.openai_client = OpenAI(api_key=api_key) 
+        self.openai_client = OpenAI(api_key=api_key, base_url=hyperparams.get("base_url", os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))) 
         self.model_name = hyperparams["model_name"].lower()
         self.temperature = hyperparams["generate"]["temperature"]
         self.max_tokens = hyperparams["generate"]["max_new_tokens"]

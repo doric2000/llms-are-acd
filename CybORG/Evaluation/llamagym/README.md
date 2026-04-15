@@ -14,6 +14,8 @@ export OPENROUTER_API_KEY=<your_key>
 wandb login
 ```
 5. Change the model and prompts to the paths you want to use in `llm_policy.yml::MODEL_CONFIG` and `llm_policy.yml::PROMPTS_CONFIG`
+    - For this experiment, use `CybORG/Agents/LLMAgents/config/model/deepseek-r1-1.5b.yml` and `CybORG/Agents/LLMAgents/config/model/gemma4-e4b.yml`.
+    - Both configs use the Ollama backend, and the previously defined server IP is `http://10.100.102.201:11434/v1`.
 
 6. Modify the execution variables if needed in `CybORG/Agents/LLMAgents/config/config_vars.py`. Current variables are:
 ```python
@@ -42,6 +44,19 @@ TOTAL_STEPS_PROGRESS_BAR = 1000 # TODO: Get this from the environment
 ```
 python3 -m CybORG.Evaluation.evaluation --max-eps 2 Evaluation/llamagym /tmp/GPT4o --wandb-entity <wandb username> --wandb-mode online
 ```
+
+## Run both experiment models automatically
+
+To run `deepseek-r1:1.5b` and `gemma4:e4b` back-to-back with the same settings and generate a single comparison report:
+
+```
+python3 CybORG/Evaluation/llamagym/run_model_comparison.py --max-eps 2 --wandb-mode offline
+```
+
+Outputs are written under `.dist/llm_compare/<timestamp>/` and include:
+- `comparison.md` (table view)
+- `comparison.json` (machine-readable)
+- per-model folders with `summary.json`, `stdout.log`, `stderr.log`
 
 - To log results offline, use `offline` for `--wandb-mode`. If running offline, `--wandb-entity` is not necessary but can be used if syncing results after evaluation run. Note: Weave does not log traces in offline mode.  
 

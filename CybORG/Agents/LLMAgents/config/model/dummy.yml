@@ -1,1 +1,4 @@
 backend: "dummy"
+schema_constraints: true
+self_correction: false
+repair_attempts: 0

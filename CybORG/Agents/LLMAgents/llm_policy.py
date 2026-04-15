@@ -1,3 +1,4 @@
+import json
 import os
 
 from ray.rllib.policy.policy import Policy
@@ -82,7 +83,7 @@ class LLMDefenderPolicy(Policy):
         prompt[0]["content"] = msg + prompt[0].get("content")
         return prompt
         
-    def extract_action(self, response: str):
+    def extract_action(self, response: str | dict):
         """Extract and create the appropriate action from the LLM's response.
         
         Args:
@@ -99,11 +100,17 @@ class LLMDefenderPolicy(Policy):
         
         try:
             Logger.debug(f"Processing response: {response}")
-            lower_response = response.lower() 
-            
-            # Extract the action from the response
-            
-            response_action = lower_response.split("action\":")[1].split(",")[0].strip().strip('"')
+            if isinstance(response, dict):
+                response_action = str(response.get("action", "")).strip()
+            else:
+                lower_response = response.lower()
+
+                if "action\":" in lower_response:
+                    response_action = lower_response.split("action\":", 1)[1].split(",", 1)[0].strip().strip('"')
+                elif "action:" in lower_response:
+                    response_action = lower_response.split("action:", 1)[1].split("\n", 1)[0].strip().strip('"')
+                else:
+                    response_action = lower_response
             lower_response_action = response_action.lower()
             
             # Initialize parameters
@@ -197,6 +204,7 @@ class LLMDefenderPolicy(Policy):
         obs_message = obs_formatter.format_observation(obs, self.last_action, self.name)
         self.current_episode_messages = []
         response = ""
+        structured_response = {"action": "Sleep", "reason": "Model output unavailable"}
         
         if self.prompts:
             self.current_episode_messages.append(self.prompts[0])
@@ -205,7 +213,8 @@ class LLMDefenderPolicy(Policy):
             if INCLUDE_PROMPT_COMMVECTOR_RULES:
                 self.current_episode_messages.append(self.commvector_rules_prompt[0])
             self.current_episode_messages.append({"role": "user", "content": obs_message})
-            response = self.generate_response(self.current_episode_messages)
+            structured_response = self.model_manager.generate_structured_response(self.current_episode_messages)
+            response = json.dumps(structured_response, ensure_ascii=False)
 
         # If there are multiple prompts, continue the conversation
         if len(self.prompts) > 1 and not INCLUDE_PROMPT_CAGE4_RULES and not INCLUDE_PROMPT_COMMVECTOR_RULES:
@@ -214,7 +223,8 @@ class LLMDefenderPolicy(Policy):
                 assistant_response = {"role": "assistant", "content": response} # Save the previous assistant response
                 self.current_episode_messages.append(assistant_response)
                 self.current_episode_messages.append(prompt)
-                response = self.generate_response(self.current_episode_messages)
+                structured_response = self.model_manager.generate_structured_response(self.current_episode_messages)
+                response = json.dumps(structured_response, ensure_ascii=False)
 
         # Save the final assistant response
         assistant_response = {"role": "assistant", "content": response} # Save the previous assistant response
@@ -236,7 +246,7 @@ class LLMDefenderPolicy(Policy):
         Logger.success(f"Final Assistant response:\n[ASSISTANT] {response}")
 
         try:
-            action = self.extract_action(response)
+            action = self.extract_action(structured_response)
         except Exception as e:
             Logger.error(f"Error extracting action, defaulting to Sleep: {e}")
             action = Sleep()

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import torch
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import List, Dict
 from CybORG.Agents.LLMAgents.llm_adapter.backend.model_backend import ModelBackend
 

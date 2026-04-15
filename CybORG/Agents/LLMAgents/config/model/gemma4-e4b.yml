@@ -1,0 +1,18 @@
+backend: "ollama"
+model_name: "gemma4:e4b"
+base_url: "http://10.100.102.201:11434/v1"
+batch_size: 1
+seed: 42069
+episodes: 1000
+schema_constraints: true
+self_correction: true
+repair_attempts: 1
+request_timeout_sec: 60
+max_retries: 0
+keep_alive: "0m"
+ollama_options:
+  num_ctx: 4096
+generate:
+  max_new_tokens: 384
+  max_length: 1024
+  temperature: 1

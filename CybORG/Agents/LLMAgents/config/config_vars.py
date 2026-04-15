@@ -10,7 +10,7 @@ ALL_LLM_AGENTS = False              # DANGER: Do you want all the LLM agents to 
 NO_LLM_AGENTS = False                # Do not enable both at the same time!
 
 # Config files
-CONFIG_MODEL_PATH = "config/model/dummy.yml"
+CONFIG_MODEL_PATH = "config/model/deepseek-r1-1.5b.yml"
 STRATEGY_PROMPT_PATH = "config/prompts/acd2025/base.yml"                  # Strategy prompt loaded second
 
 # Environment variables

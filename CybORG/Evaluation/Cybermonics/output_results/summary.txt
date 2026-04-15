@@ -1,0 +1,4 @@
+CybORG v4.0, Scenario4
+Author: LLM and RL Agent, Team: UCSC Autonomous Cybersecurity Lab, Technique: LLM+RL
+Average reward is: -131.79999999999998 with a standard deviation of 0.0
+Using agents {'blue_agent_0': <CybORG.Agents.CybermonicAgents.cage4.InductiveGraphPPOAgent object at 0x7e33ace208e0>, 'blue_agent_1': <CybORG.Agents.CybermonicAgents.cage4.InductiveGraphPPOAgent object at 0x7e338f5df8e0>, 'blue_agent_2': <CybORG.Agents.CybermonicAgents.cage4.InductiveGraphPPOAgent object at 0x7e338f5dd930>, 'blue_agent_3': <CybORG.Agents.CybermonicAgents.cage4.InductiveGraphPPOAgent object at 0x7e338f5de6e0>, 'blue_agent_4': DefenderAgent}
