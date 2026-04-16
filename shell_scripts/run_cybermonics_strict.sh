@@ -25,6 +25,8 @@
 
 set -e  # Exit on error
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # Parse model argument (default: deepseek)
 MODEL="${1:-deepseek}"
 
@@ -69,10 +71,10 @@ echo ""
 
 # Activate environment
 echo "[1/5] Activating environment..."
-source /home/dor/llms-are-acd/cage-env/bin/activate
+source "$REPO_ROOT/cage-env/bin/activate"
 
 # Set directory
-cd /home/dor/llms-are-acd/cage-challenge-4
+cd "$REPO_ROOT/cage-challenge-4"
 echo "[2/5] Working directory: $(pwd)"
 echo ""
 
@@ -91,7 +93,7 @@ echo "      - Temperature: 1.0 (paper-compliant)"
 echo ""
 
 # Create output directory
-OUTPUT_DIR="/home/dor/llms-are-acd/cybermonics_strict_comparison_${OUTPUT_SUFFIX}"
+OUTPUT_DIR="$REPO_ROOT/results/cybermonics_strict_comparison_${OUTPUT_SUFFIX}"
 if [ -n "$SEED" ]; then
   OUTPUT_DIR="${OUTPUT_DIR}_seed${SEED}"
 fi

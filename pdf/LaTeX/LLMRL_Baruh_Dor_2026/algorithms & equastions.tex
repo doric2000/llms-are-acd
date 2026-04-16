@@ -1,0 +1,609 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ALGORITHMS & EQUATIONS — INSERT GUIDE
+%  Paper: "Beyond the Baseline: Improving LLM-driven Agents for ACD"
+%
+%  This file contains all formal definitions, equations, and algorithms
+%  extracted from the four related papers, adapted for YOUR paper.
+%  Each block is labeled with the EXACT section where it should be inserted.
+%
+%  REQUIRED: Add these packages to your preamble (if not already present):
+%    \usepackage{amsmath}
+%    \usepackage{amssymb}
+%    \usepackage{algorithm}
+%    \usepackage{algorithmic}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%=============================================================================
+%  SECTION 2: BACKGROUND AND TECHNICAL FOUNDATIONS
+%=============================================================================
+%
+%  INSERT INTO: Section 2.1 — "The CybORG and CAGE 4 Environment"
+%  PURPOSE:     Formalize the Dec-POMDP that underpins the ENTIRE paper.
+%               Without this, the paper lacks a mathematical problem statement.
+%  SOURCE:      Singh et al. (2025) Section 3 + King et al. (2025) Section 3
+%-----------------------------------------------------------------------------
+
+% --- Equation: Dec-POMDP Definition ---
+% INSERT after the sentence: "...meaning each defender only has a limited 
+% view of the overall network state."
+
+The CAGE~4 environment is formally modeled as a
+\textbf{Decentralized Partially Observable Markov Decision Process}
+(Dec-POMDP)~\cite{arXiv:2410.17351}, defined by the tuple:
+\begin{equation}
+\label{eq:dec_pomdp}
+  \mathcal{M} = \bigl(\mathcal{I},\; \mathcal{S},\; \mathcal{A},\;
+  \mathcal{T},\; \Omega,\; O,\; R,\; b_0 \bigr),
+\end{equation}
+where $\mathcal{I}=\{1,\ldots,n\}$ is the set of $n$ blue agents,
+$\mathcal{S}$ is a finite state space capturing the full network state,
+$\mathcal{A}=\times_{i\in\mathcal{I}} \mathcal{A}_i$ is the
+joint action space composed of each agent's individual actions
+(Monitor, Analyse, Remove, Restore, DeployDecoy,
+AllowTrafficZone, BlockTrafficZone),
+$\mathcal{T}: \mathcal{S}\times\mathcal{A}\to\Delta(\mathcal{S})$
+is the transition function,
+$\Omega=\times_{i\in\mathcal{I}}\Omega_i$ is the set of
+joint observations,
+$O:\mathcal{S}\times\mathcal{A}\to\Omega$ is the observation function,
+$R:\mathcal{S}\times\mathcal{A}\to\mathbb{R}$ is the shared
+reward function (penalties for service unavailability),
+and $b_0$ is the initial state distribution.
+Each blue agent $i$ receives only its local observation
+$o_i\in\Omega_i$ and must select actions based on its observation
+history $h_t^i = (o_0^i, a_0^i, \ldots, o_{t-1}^i, a_{t-1}^i)$.
+
+
+%=============================================================================
+%  SECTION 2: BACKGROUND AND TECHNICAL FOUNDATIONS
+%=============================================================================
+%
+%  INSERT INTO: Section 2.2 — "The KEEP Agent Baseline"
+%  PURPOSE:     Show the GCN equation that gives KEEP its power.
+%               This explains WHY KEEP outperforms flat-vector LLM prompts.
+%  SOURCE:      King et al. (2025) Section 4.2, Equation 2
+%-----------------------------------------------------------------------------
+
+% --- Equation: GCN Node Embedding ---
+% INSERT after: "Developed using the Proximal Policy Optimization (PPO) 
+% algorithm..."
+
+The KEEP architecture represents the network as an attributed graph
+$\mathcal{O}=\langle V, E, X \rangle$, where $V$ denotes hosts,
+$E$ denotes inter-host connections, and $X$ denotes per-node feature
+vectors. A two-layer \textbf{Graph Convolutional Network}
+(GCN)~\cite{arXiv:2509.16151} produces node embeddings via:
+\begin{equation}
+\label{eq:gcn}
+  H^{(\ell+1)} = \sigma\!\left(
+    \tilde{D}^{-\frac{1}{2}}\,\tilde{A}\,\tilde{D}^{-\frac{1}{2}}\,
+    H^{(\ell)}\,W^{(\ell)} + b^{(\ell)}
+  \right),
+\end{equation}
+where $\tilde{A}=A+I$ is the adjacency matrix with self-loops,
+$\tilde{D}$ is its degree matrix,
+$W^{(\ell)}$ and $b^{(\ell)}$ are trainable parameters,
+and $\sigma$ is a non-linear activation function.
+The first GCN layer uses 256-dimensional embeddings and the second
+uses 64-dimensional embeddings.
+Actions are represented as functions upon nodes $a_k(v_i)$,
+allowing the action space to scale automatically with the network
+topology. This relational inductive bias enables KEEP to
+zero-shot generalize across unseen topologies --- an advantage
+that explains its strong performance ($\mu=-493$) relative to
+agents operating on flat observation vectors.
+
+
+%=============================================================================
+%  SECTION 2: BACKGROUND AND TECHNICAL FOUNDATIONS
+%=============================================================================
+%
+%  INSERT INTO: Section 2.2 — "The KEEP Agent Baseline"
+%  PURPOSE:     Show the PPO clipped objective that trains KEEP.
+%               Needed because PPO is referenced throughout the paper
+%               but never formally defined.
+%  SOURCE:      Schulman et al. (2017) via Singh et al. Section 4
+%-----------------------------------------------------------------------------
+
+% --- Equation: PPO Clipped Objective ---
+
+Both KEEP and the H-MARL sub-policies are trained using
+\textbf{Proximal Policy Optimization} (PPO)~\cite{arXiv:1707.06347},
+which maximizes the clipped surrogate objective:
+\begin{equation}
+\label{eq:ppo}
+  L^{\text{CLIP}}(\theta) = \hat{\mathbb{E}}_t\!\left[
+    \min\!\bigl(
+      r_t(\theta)\,\hat{A}_t,\;
+      \text{clip}\bigl(r_t(\theta),\, 1{-}\epsilon,\, 1{+}\epsilon\bigr)\,
+      \hat{A}_t
+    \bigr)
+  \right],
+\end{equation}
+where $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$
+is the probability ratio between the new and old policies,
+$\hat{A}_t$ is the generalized advantage estimate (GAE),
+and $\epsilon$ is a clipping hyperparameter (typically $0.2$).
+This objective prevents destructive large policy updates,
+enabling stable multi-agent training.
+
+
+%=============================================================================
+%  SECTION 3: RELATED WORK — Hammar et al. subsection
+%=============================================================================
+%
+%  INSERT INTO: Section 3.3 — "Hallucination-Resistant Security Planning"
+%  PURPOSE:     Define eq:consistency (ALREADY REFERENCED in your Table I
+%               at line 346 but NEVER DEFINED — this is a broken reference).
+%  SOURCE:      Hammar et al. (2026) Equation 2
+%-----------------------------------------------------------------------------
+
+% --- Equation: Lookahead Consistency Function ---
+% INSERT after: "...checking how consistent they are with each other."
+
+Formally, given $N$ candidate actions
+$\mathcal{A}_t = \{a^1_t, \ldots, a^N_t\}$,
+each is paired with a lookahead prediction $T^i_{t+1}$ of the
+expected time remaining to complete the task.
+The \textbf{consistency} of the candidate set is:
+\begin{equation}
+\label{eq:consistency}
+  \lambda(\mathcal{A}_t) = \exp\!\left(
+    -\frac{\beta}{N}\sum_{i=1}^{N}
+    \bigl(T^i_{t+1} - \overline{T}_{t+1}\bigr)^2
+  \right),
+\end{equation}
+where $\beta > 0$ controls sensitivity to disagreement and
+$\overline{T}_{t+1} = \frac{1}{N}\sum_{i=1}^{N} T^i_{t+1}$
+is the mean prediction.
+The output is bounded in $[0,1]$: a value of~$1$ indicates
+full consistency (all candidates agree) and~$0$ indicates
+high disagreement, signaling likely hallucination.
+
+
+%=============================================================================
+%  SECTION 3: RELATED WORK — Hammar et al. subsection
+%=============================================================================
+%
+%  INSERT INTO: Section 3.3 — immediately after eq:consistency
+%  PURPOSE:     The abstention policy that uses the consistency score.
+%               This is the mechanism that inspired your CoSC fallback.
+%  SOURCE:      Hammar et al. (2026) Equation 3
+%-----------------------------------------------------------------------------
+
+% --- Equation: Conformal Abstention Policy ---
+
+The framework selects actions via the \textbf{conformal abstention
+policy}:
+\begin{equation}
+\label{eq:abstention}
+  \pi_\gamma(\mathcal{A}_t) =
+  \begin{cases}
+    \emptyset \;\text{(abstain)},
+      & \text{if } \lambda(\mathcal{A}_t) \leq \gamma, \\[4pt]
+    \displaystyle\arg\min_{a^i_t \in \mathcal{A}_t}\{T^i_{t+1}\},
+      & \text{if } \lambda(\mathcal{A}_t) > \gamma,
+  \end{cases}
+\end{equation}
+where $\gamma \in [0,1]$ is a consistency threshold.
+When consistency falls below~$\gamma$, the system abstains and
+collects external feedback (e.g., from a digital twin) before
+retrying. Hammar et al.\ prove that tuning~$\gamma$ on a
+calibration dataset of $n$ known-hallucinated examples provides a
+formal upper bound on the hallucination probability: given a
+desired bound $\kappa\in(0,1]$, the threshold is set to
+\begin{equation}
+\label{eq:gamma_calibration}
+  \tilde{\gamma} = \inf\!\left\{
+    \gamma \;\middle|\;
+    \frac{|\{i \mid \lambda(\mathcal{A}_i)\leq\gamma\}|}{n}
+    \geq
+    \frac{\lceil(n+1)(1-\kappa)\rceil}{n}
+  \right\},
+\end{equation}
+guaranteeing $P\!\bigl(\pi_{\tilde{\gamma}}(\tilde{\mathcal{A}})
+\neq\emptyset\bigr)\leq\kappa$\;\cite{arXiv:2602.05279}.
+
+
+%=============================================================================
+%  SECTION 3: RELATED WORK — Hammar et al. subsection
+%=============================================================================
+%
+%  INSERT INTO: Section 3.3 — near "hallucination rate of 0.02"
+%  PURPOSE:     Formal definition of a hallucinated action.
+%               Your paper measures hallucination rate but never
+%               formally defines what counts as a hallucination.
+%  SOURCE:      Hammar et al. (2026) Definition 1
+%-----------------------------------------------------------------------------
+
+% --- Definition: Hallucinated Action ---
+
+\noindent\textbf{Definition 1 (Hallucinated Action~\cite{arXiv:2602.05279}).}
+Given a sequence of actions $a_0, \ldots, a_{t-1}, a_t$ for a
+security management task, the action~$a_t$ is \textit{hallucinated}
+if it does not reduce the expected time remaining to complete the task:
+\begin{equation}
+\label{eq:hallucination_def}
+  \mathbb{E}\{T_{t+1} \mid a_0, \ldots, a_t\}
+  \;\geq\;
+  \mathbb{E}\{T_t \mid a_0, \ldots, a_{t-1}\},
+\end{equation}
+where $T_t$ is the time remaining at stage~$t$, assuming future
+actions are selected optimally.
+
+
+%=============================================================================
+%  SECTION 3: RELATED WORK — Gao et al. subsection
+%=============================================================================
+%
+%  INSERT INTO: Section 3.4 — "In-Context Autonomous Network Incident
+%               Response"
+%  PURPOSE:     The LoRA fine-tuning loss and Monte-Carlo Q-function.
+%               These are the two key equations from Gao et al. that
+%               directly inform your CoT template and future work on
+%               behavioral distillation.
+%  SOURCE:      Gao et al. (2026) Equations 2 and 3
+%-----------------------------------------------------------------------------
+
+% --- Equation: LoRA Fine-Tuning Cross-Entropy Loss ---
+% INSERT after: "The model is fine-tuned with LoRA on 50,000 labeled 
+% examples"
+
+The model is fine-tuned offline using \textbf{Low-Rank Adaptation}
+(LoRA), minimizing the cross-entropy loss over a dataset
+$\mathcal{D}=\{(x^i, y^i)\}_{i=1}^K$ of instruction--answer pairs:
+\begin{equation}
+\label{eq:lora_loss}
+  L(w) = -\frac{1}{B}\sum_{i=1}^{B}\sum_{k=1}^{\ell_i}
+  \log\,\Phi_w\!\bigl(y^i_k \mid x^i, y^i_{1:k-1}\bigr),
+\end{equation}
+where $w$ denotes the LoRA trainable parameters (rank~64),
+$B$ is the batch size, and $\ell_i$ is the token length of
+the $i$-th answer.
+
+
+% --- Equation: Monte-Carlo Lookahead Q-Function ---
+% INSERT after eq:lora_loss, in the planning description
+
+Online, the agent evaluates $N$ candidate actions by simulating $M$
+recovery trajectories for each, then selects the cost minimizer
+via a Monte-Carlo estimate of the Q-function:
+\begin{equation}
+\label{eq:mc_q}
+  Q(\hat{s}_{t+1}, \hat{a}^k_{t+1})
+  = \frac{1}{M}\sum_{i\in[M]}\sum_{(\hat{s},\hat{a})\in q^i}
+    c(\hat{s}, \hat{a}),
+\end{equation}
+\begin{equation}
+\label{eq:mc_argmin}
+  a_{t+1} \in \arg\min_{a \in \mathcal{A}_t}\;
+  Q(\hat{s}_{t+1},\, a),
+\end{equation}
+where $q^i$ is the $i$-th simulated trajectory and $c(\hat{s},\hat{a})$
+is the time cost of executing action~$\hat{a}$ in state~$\hat{s}$.
+This planning procedure has complexity $O(MN)$ per step.
+
+
+%=============================================================================
+%  SECTION 4: METHODOLOGY
+%=============================================================================
+%
+%  INSERT INTO: Section 4.1 — "Agent Architecture and CoSC Extension"
+%  PURPOSE:     The IOC-Priority Expert Rule that forms the semantic
+%               verification logic INSIDE your CoSC.  This is the
+%               "reference for what correct reasoning looks like" that
+%               you mention in the Related Work but never formalize.
+%  SOURCE:      Singh et al. (2025) Section 4.1, H-MARL Expert Policy
+%-----------------------------------------------------------------------------
+
+% --- Equation: IOC-Based Expert Decision Rule ---
+% INSERT after the CoSC description bullet point
+
+The semantic verification layer within the CoSC gate is grounded
+in the \textbf{IOC-based expert policy}
+$\pi_E$~\cite{arXiv:2410.17351}, which defines the
+domain-correct reasoning reference:
+\begin{equation}
+\label{eq:ioc_expert}
+  \pi_E(h_t) =
+  \begin{cases}
+    \texttt{Recover},
+      & \text{if malicious-file IOCs detected on host}, \\
+    \texttt{ControlTraffic},
+      & \text{if network IOCs detected}, \\
+    \texttt{Investigate},
+      & \text{otherwise}.
+  \end{cases}
+\end{equation}
+In our implementation, this rule is encoded as a
+\textit{post-generation validation check}: if the LLM proposes
+an action that contradicts $\pi_E$ given the current IOC state
+(e.g., issuing \texttt{Analyse} when host-level IOCs indicate
+active compromise), the CoSC gate flags a semantic
+hallucination and triggers re-generation with corrective
+feedback.
+
+
+%=============================================================================
+%  SECTION 4: METHODOLOGY
+%=============================================================================
+%
+%  INSERT INTO: Section 4.1 — REPLACE the prose-only CoSC description
+%               with this formal algorithm.
+%  PURPOSE:     This is your CORE CONTRIBUTION formalized as pseudocode.
+%               An academic paper must present its novel mechanism as
+%               a reproducible algorithm.
+%  SOURCE:      YOUR novel synthesis of:
+%               - Hammar et al.'s consistency/abstention framework
+%               - Singh et al.'s IOC expert rule
+%               - Gao et al.'s perceive-reason-plan-act pipeline
+%               - Castro et al.'s adapter interface
+%-----------------------------------------------------------------------------
+
+% --- Algorithm 1: Chain-of-Self-Correction (CoSC) ---
+
+\begin{algorithm}[t]
+\caption{Chain-of-Self-Correction (CoSC) Agent Policy}
+\label{alg:cosc}
+\begin{algorithmic}[1]
+\REQUIRE LLM model $\Phi$, CybORG adapter $\mathcal{F}$,
+         IOC expert rule $\pi_E$, max retries $K=3$
+\ENSURE  Action $a_t$ for current step
+
+\STATE $o_t \gets$ CybORG observation at step $t$
+\STATE $\textit{prompt} \gets \mathcal{F}(o_t)$
+    \COMMENT{Adapter: numerical obs $\to$ structured NL}
+\STATE $\textit{ioc\_state} \gets$ extract IOC priorities from $o_t$
+\STATE $k \gets 0$
+
+\WHILE{$k < K$}
+    \STATE $(\hat{a}_t,\, \textit{reason}) \gets \Phi(\textit{prompt})$
+        \COMMENT{LLM generates candidate action + reasoning}
+
+    \STATE \textbf{// Stage 1: Schema Validation (Syntactic Check)}
+    \IF{$\hat{a}_t \notin \mathcal{A}_{\text{valid}}$ \textbf{or}
+        JSON parse fails}
+        \STATE $\textit{prompt} \gets \textit{prompt} \,\cup\,
+               \text{``Invalid format. Valid actions: } \mathcal{A}_{\text{valid}}\text{''}$
+        \STATE $k \gets k + 1$;\; \textbf{continue}
+    \ENDIF
+
+    \STATE \textbf{// Stage 2: IOC-Rule Verification (Semantic Check)}
+    \STATE $a_E \gets \pi_E(\textit{ioc\_state})$
+        \COMMENT{Expert reference action (Eq.~\ref{eq:ioc_expert})}
+    \IF{$\textit{ioc\_state}$ indicates active compromise
+        \textbf{and} $\hat{a}_t \notin \{\texttt{Remove}, \texttt{Restore}\}$}
+        \STATE $\textit{prompt} \gets \textit{prompt} \,\cup\,
+               \text{``IOCs detected on host. Re-assess: recovery action required.''}$
+        \STATE $k \gets k + 1$;\; \textbf{continue}
+    \ENDIF
+
+    \STATE \textbf{// Stage 3: Logical Consistency Check}
+    \IF{$\hat{a}_t = \texttt{Restore}$ \textbf{and}
+        target host has $\textit{ioc\_priority}=0$}
+        \STATE $\textit{prompt} \gets \textit{prompt} \,\cup\,
+               \text{``Host is clean. Restore would cause unnecessary downtime.''}$
+        \STATE $k \gets k + 1$;\; \textbf{continue}
+    \ENDIF
+
+    \RETURN $\hat{a}_t$
+        \COMMENT{Action passes all gates}
+\ENDWHILE
+
+\RETURN $\texttt{Sleep}$
+    \COMMENT{Exhausted retries $\to$ safe fallback (abstention)}
+\end{algorithmic}
+\end{algorithm}
+
+
+%=============================================================================
+%  SECTION 4: METHODOLOGY — Evaluation Metrics
+%=============================================================================
+%
+%  INSERT INTO: Section 4.4 — "Evaluation Metrics"
+%  PURPOSE:     This is the explicit TODO on line 424 of your paper:
+%               "demonstrate how the calculate was done - show the equations"
+%  SOURCE:      Castro et al. (reward), Singh et al. (MTTR, precision),
+%               Hammar et al. (hallucination), your own Cv definition
+%-----------------------------------------------------------------------------
+
+% --- REPLACE the current Section 4.4 content with the following ---
+
+\subsection{Evaluation Metrics}
+We quantify agent effectiveness using metrics established across
+the reviewed literature. All metrics are computed over $E$ episodes
+of $T$ steps each, with $n$ blue agents per episode.
+
+\textbf{Joint Reward} ($\mu$).
+The primary measure of team efficacy, computed as the mean
+cumulative penalty across episodes. CybORG assigns penalties
+when green agents cannot access services
+(due to defensive actions or red-agent impact):
+\begin{equation}
+\label{eq:joint_reward}
+  \mu = \frac{1}{E}\sum_{e=1}^{E}\sum_{t=1}^{T} R_t^{(e)},
+\end{equation}
+where $R_t^{(e)}$ is the shared team reward at step~$t$ of
+episode~$e$~\cite{arXiv:2505.04843v2}.
+
+\textbf{Standard Deviation} ($\sigma$).
+Measures the variability of episode-level cumulative rewards:
+\begin{equation}
+\label{eq:sigma}
+  \sigma = \sqrt{
+    \frac{1}{E}\sum_{e=1}^{E}
+    \left(\sum_{t=1}^{T} R_t^{(e)} - \mu\right)^{\!2}
+  }.
+\end{equation}
+
+\textbf{Stability Coefficient} ($C_v$).
+A normalized indicator of behavioral consistency, defined as
+the coefficient of variation:
+\begin{equation}
+\label{eq:stability}
+  C_v = \frac{\sigma}{|\mu|}.
+\end{equation}
+A lower $C_v$ indicates predictable agent behavior; a higher
+value indicates volatile performance across episodes.
+
+\textbf{Hallucination Rate} ($\eta$).
+The fraction of actions classified as hallucinations, encompassing
+both syntactic errors (unparseable output) and semantic errors
+(logically contradictory actions), over all action decisions.
+Following Definition~1 (Eq.~\ref{eq:hallucination_def}), we
+adapt the hallucination taxonomy to the CAGE~4 context:
+\begin{equation}
+\label{eq:hallucination_rate}
+  \eta = \frac{
+    N_{\text{syntactic}} + N_{\text{semantic}}
+  }{
+    E \times T
+  },
+\end{equation}
+where $N_{\text{syntactic}}$ counts actions that fail
+schema validation (unparseable JSON, invalid action names) and
+$N_{\text{semantic}}$ counts actions that pass syntax checks
+but violate the IOC-expert logic $\pi_E$
+(Eq.~\ref{eq:ioc_expert}) — for example, issuing \texttt{Restore}
+on an uncompromised host or \texttt{Monitor} during active
+compromise.
+
+\textbf{CoSC Repair Success Rate} ($\rho$).
+The fraction of hallucinated actions that the Chain-of-Self-Correction
+gate successfully repaired within $K$ retries:
+\begin{equation}
+\label{eq:repair_rate}
+  \rho = \frac{N_{\text{repaired}}}{N_{\text{syntactic}} + N_{\text{semantic}}}.
+\end{equation}
+
+\textbf{Red Impact Count} ($I_{\text{red}}$).
+The total number of steps in which the red agent
+successfully executed its final-stage \texttt{Impact} action,
+rendering the critical OT service
+unavailable~\cite{arXiv:2410.17351}:
+\begin{equation}
+\label{eq:red_impact}
+  I_{\text{red}} = \sum_{e=1}^{E}\sum_{t=1}^{T}
+    \mathbb{1}\!\bigl[\text{OT service impacted at step } t
+    \text{ of episode } e\bigr].
+\end{equation}
+Our experiments report $I_{\text{red}}=0$ for both model
+configurations, indicating complete suppression of the
+adversary's strategic objective.
+
+
+%=============================================================================
+%  SECTION 4: METHODOLOGY — IOC Observation Enhancement
+%=============================================================================
+%
+%  INSERT INTO: Section 4.1 — inside the Adapter Interface bullet
+%  PURPOSE:     Formalize the IOC-priority encoding you mention in prose.
+%               This shows exactly how Singh et al.'s observation
+%               enhancement maps into your prompt structure.
+%  SOURCE:      Singh et al. (2025) Section 4.2, Figure 3
+%-----------------------------------------------------------------------------
+
+% --- Equation: IOC Priority Encoding ---
+
+Each host $v \in V$ in the agent's subnet is assigned
+an IOC priority score $p(v) \in \{0,1,2,3\}$ based on
+detected indicators of compromise~\cite{arXiv:2410.17351}:
+\begin{equation}
+\label{eq:ioc_priority}
+  p(v) =
+  \begin{cases}
+    3, & \text{if decoy-access IOCs detected (reconnaissance)}, \\
+    2, & \text{if malicious files with user-level access (exploit)}, \\
+    1, & \text{if malicious files with root access (escalation)}, \\
+    0, & \text{if no IOCs detected (clean)}.
+  \end{cases}
+\end{equation}
+This priority encoding is injected into the natural language
+prompt for each host, providing the LLM with the same
+IOC-level granularity that yields a 42\% reward improvement
+for RL agents~\cite{arXiv:2410.17351}.
+
+
+%=============================================================================
+%  SECTION 5: EXPERIMENTAL RESULTS — Behavioral Consistency
+%=============================================================================
+%
+%  INSERT INTO: Section 7 — "Critical Analysis", subsection
+%               "Behavioral Consistency Analysis" (already exists)
+%  PURPOSE:     Formalize the improvement percentage calculation
+%               that you report in Table I ("vs. Base" column).
+%  SOURCE:      Standard metric definition
+%-----------------------------------------------------------------------------
+
+% --- Equation: Relative Improvement ---
+
+The \textbf{relative improvement} over the original LLM baseline
+is computed as:
+\begin{equation}
+\label{eq:improvement}
+  \Delta = \frac{|\mu_{\text{ours}}| - |\mu_{\text{base}}|}{|\mu_{\text{base}}|}
+         = \frac{|\mu_{\text{base}}| - |\mu_{\text{ours}}|}{|\mu_{\text{base}}|}
+         \times 100\%,
+\end{equation}
+where $\mu_{\text{base}} = -2547.2$ (Castro et al.\ ALL-LLM)
+and $\mu_{\text{ours}}$ is the mean reward of our agent.
+For DeepSeek-R1-1.5b with $\mu=-477.5$, this yields
+$\Delta = \frac{2547.2 - 477.5}{2547.2} \approx 81.2\%$.
+
+
+%=============================================================================
+%  SECTION 9: FUTURE RESEARCH DIRECTIONS
+%=============================================================================
+%
+%  INSERT INTO: Section "Future Research Directions", bullet on
+%               "RL-to-LLM Behavioral Distillation"
+%  PURPOSE:     Show the LoRA loss equation that would be used for
+%               the future work you describe.  Referencing eq:lora_loss
+%               gives this future direction technical substance.
+%  SOURCE:      Gao et al. (2026) Equation 2
+%-----------------------------------------------------------------------------
+
+% --- Reference only (equation already defined above as eq:lora_loss) ---
+% In the Future Work bullet, add this sentence:
+
+Specifically, the fine-tuning would minimize
+the cross-entropy loss $L(w)$ (Eq.~\ref{eq:lora_loss})
+over trajectories generated by the KEEP agent,
+using LoRA adapters at rank~16 to fit within consumer-grade
+GPU memory constraints.
+
+
+%=============================================================================
+%  SUMMARY: COMPLETE EQUATION REFERENCE MAP
+%=============================================================================
+%
+%  Eq. Label              | Source Paper      | Your Section  | Purpose
+%  -----------------------|-------------------|---------------|------------------
+%  eq:dec_pomdp           | Singh/King        | §2.1          | Problem formulation
+%  eq:gcn                 | King et al.       | §2.2          | KEEP architecture
+%  eq:ppo                 | Schulman/Singh    | §2.2          | PPO training obj.
+%  eq:consistency         | Hammar et al.     | §3.3          | Consistency fn λ
+%  eq:abstention          | Hammar et al.     | §3.3          | Abstention policy
+%  eq:gamma_calibration   | Hammar et al.     | §3.3          | Threshold tuning
+%  eq:hallucination_def   | Hammar et al.     | §3.3          | Def. of hallucination
+%  eq:lora_loss           | Gao et al.        | §3.4          | LoRA fine-tuning
+%  eq:mc_q                | Gao et al.        | §3.4          | MC planning Q-fn
+%  eq:mc_argmin           | Gao et al.        | §3.4          | Action selection
+%  eq:ioc_expert          | Singh et al.      | §4.1          | CoSC expert rule
+%  eq:ioc_priority        | Singh et al.      | §4.1          | IOC encoding
+%  eq:joint_reward        | Castro et al.     | §4.4          | Mean reward μ
+%  eq:sigma               | Standard          | §4.4          | Std. deviation σ
+%  eq:stability           | Yours             | §4.4          | Stability coeff. Cv
+%  eq:hallucination_rate  | Yours + Hammar    | §4.4          | Hallucination rate η
+%  eq:repair_rate         | Yours             | §4.4          | CoSC repair rate ρ
+%  eq:red_impact          | Singh et al.      | §4.4          | Red impact count
+%  eq:improvement         | Standard          | §7            | % improvement calc.
+%
+%  Algorithm Label        | Source            | Your Section  | Purpose
+%  -----------------------|-------------------|---------------|------------------
+%  alg:cosc               | YOUR CONTRIBUTION | §4.1          | CoSC mechanism
+%
+%=============================================================================

@@ -4,16 +4,16 @@
 
 ### Using DeepSeek-r1-1.5b (Default)
 ```bash
-bash /home/dor/llms-are-acd/run_cybermonics_strict.sh
+bash shell_scripts/run_cybermonics_strict.sh
 ```
 or explicitly:
 ```bash
-bash /home/dor/llms-are-acd/run_cybermonics_strict.sh deepseek
+bash shell_scripts/run_cybermonics_strict.sh deepseek
 ```
 
 ### Using Qwen2.5-7b
 ```bash
-bash /home/dor/llms-are-acd/run_cybermonics_strict.sh qwen
+bash shell_scripts/run_cybermonics_strict.sh qwen
 ```
 
 ### Manual Full Command (DeepSeek)
@@ -22,9 +22,9 @@ Run this from the repository root:
 
 ```bash
 #!/bin/bash
-source /home/dor/llms-are-acd/cage-env/bin/activate
+source ./cage-env/bin/activate
 
-cd /home/dor/llms-are-acd/cage-challenge-4
+cd ./cage-challenge-4
 
 # Set strict profile to match paper: 2 episodes × 500 steps each (1000 total steps)
 export CAGE4_ENFORCE_STRICT_BASELINE=true
@@ -39,20 +39,20 @@ export CAGE4_MODEL_CONFIG="config/model/ollama-deepseek-r1-8b.yml"
 
 # Run evaluation with Cybermonics submission  
 # (has 1 LLM blue_agent_4 + 4 KEEP GNN agents blue_agent_0-3)
-mkdir -p /home/dor/llms-are-acd/cybermonics_strict_comparison_deepseek
+mkdir -p ./results/cybermonics_strict_comparison_deepseek
 python -m CybORG.Evaluation.evaluation \
   --max-eps 2 \
   CybORG/Evaluation/Cybermonics \
-  /home/dor/llms-are-acd/cybermonics_strict_comparison_deepseek/results
+  ./results/cybermonics_strict_comparison_deepseek/results
 ```
 
 ### Manual Full Command (Qwen)
 
 ```bash
 #!/bin/bash
-source /home/dor/llms-are-acd/cage-env/bin/activate
+source ./cage-env/bin/activate
 
-cd /home/dor/llms-are-acd/cage-challenge-4
+cd ./cage-challenge-4
 
 # Set strict profile to match paper: 2 episodes × 500 steps each (1000 total steps)
 export CAGE4_ENFORCE_STRICT_BASELINE=true
@@ -66,11 +66,11 @@ export CAGE4_RED_AGENT_VARIANT=finite_state
 export CAGE4_MODEL_CONFIG="config/model/qwen2.5-7b.yml"
 
 # Run evaluation with Cybermonics submission  
-mkdir -p /home/dor/llms-are-acd/cybermonics_strict_comparison_qwen
+mkdir -p ./results/cybermonics_strict_comparison_qwen
 python -m CybORG.Evaluation.evaluation \
   --max-eps 2 \
   CybORG/Evaluation/Cybermonics \
-  /home/dor/llms-are-acd/cybermonics_strict_comparison_qwen/results
+  ./results/cybermonics_strict_comparison_qwen/results
 ```
 
 ## Configuration Match with Paper

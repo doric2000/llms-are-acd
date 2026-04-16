@@ -172,3 +172,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+.grepai/
+.dist/
+cage-env/
+/AGENTS.md
+/cage-env/
+/verify_imports.py
+/test_cyborg.py

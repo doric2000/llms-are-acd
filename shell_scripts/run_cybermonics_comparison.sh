@@ -6,10 +6,11 @@ echo "Configuration: 1 DeepSeek LLM + 4 KEEP GNN agents vs FiniteState red agent
 echo "Profile: 2 episodes × 500 steps per episode"
 echo ""
 
-cd /home/dor/llms-are-acd/cage-challenge-4
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT/cage-challenge-4"
 
 # Activate environment
-source /home/dor/llms-are-acd/cage-env/bin/activate
+source "$REPO_ROOT/cage-env/bin/activate"
 
 # Set strict baseline enforcement
 export CAGE4_ENFORCE_STRICT_BASELINE=true
@@ -23,7 +24,7 @@ export CAGE4_RED_AGENT_VARIANT=finite_state
 export CAGE4_MODEL_CONFIG=config/model/ollama-deepseek-r1-1.5b.yml
 
 # Create output directory
-OUTPUT_DIR="/home/dor/llms-are-acd/paper_comparison_deepseek_keep_strict"
+OUTPUT_DIR="$REPO_ROOT/results/paper_comparison_deepseek_keep_strict"
 mkdir -p "$OUTPUT_DIR"
 
 echo "Output directory: $OUTPUT_DIR"

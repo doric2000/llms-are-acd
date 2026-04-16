@@ -8,12 +8,17 @@ SEPARATE DIAGRAMS VERSION - Each visualization in its own figure
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Rectangle
+from pathlib import Path
 
 # Set style
 plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
 plt.rcParams['font.size'] = 11
 plt.rcParams['axes.grid'] = True
 plt.rcParams['grid.alpha'] = 0.3
+
+# Output directory for generated figures
+OUTPUT_DIR = Path(__file__).resolve().parent / "assets"
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Data from parity comparison table
 models = [
@@ -58,8 +63,9 @@ for i, (bar, mean, std) in enumerate(zip(bars, rewards_mean, rewards_std)):
              fontsize=11, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/01_mean_reward_comparison.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/01_mean_reward_comparison.png")
+out_file = OUTPUT_DIR / '01_mean_reward_comparison.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -100,8 +106,9 @@ for bar, val in zip(bars_imp, improvement_vals):
              ha='center', va='bottom', fontsize=12, fontweight='bold', color='darkgreen')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/02_improvement_percentage.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/02_improvement_percentage.png")
+out_file = OUTPUT_DIR / '02_improvement_percentage.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -128,8 +135,9 @@ for bar, std in zip(bars_std, rewards_std):
              ha='center', va='bottom', fontsize=11, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/03_standard_deviation.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/03_standard_deviation.png")
+out_file = OUTPUT_DIR / '03_standard_deviation.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -156,8 +164,9 @@ for bar, cv in zip(bars_cv, cv_values):
              ha='center', va='bottom', fontsize=11, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/04_stability_coefficient.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/04_stability_coefficient.png")
+out_file = OUTPUT_DIR / '04_stability_coefficient.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -195,8 +204,9 @@ ax5.grid(axis='x', alpha=0.4, linewidth=0.8)
 ax5.set_xlim(-3500, 500)
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/05_confidence_intervals.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/05_confidence_intervals.png")
+out_file = OUTPUT_DIR / '05_confidence_intervals.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -249,8 +259,9 @@ ax6.text(0.5, 0.95, 'Summary Statistics: CAGE Challenge 4 Parity Comparison',
          transform=ax6.transAxes)
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/06_summary_statistics.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/06_summary_statistics.png")
+out_file = OUTPUT_DIR / '06_summary_statistics.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -311,8 +322,9 @@ for i, (bar, mean, std) in enumerate(zip(bars, all_rewards, all_std)):
              fontsize=10, fontweight='bold')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/07_paper_vs_ours.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/07_paper_vs_ours.png")
+out_file = OUTPUT_DIR / '07_paper_vs_ours.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 # ============================================================================
@@ -354,8 +366,9 @@ for bar, val in zip(bars2, improvements_vs_baseline):
              ha='left', va='center', fontsize=12, fontweight='bold', color='darkgreen')
 
 plt.tight_layout()
-plt.savefig('/home/dor/llms-are-acd/08_relative_improvement.png', dpi=300, bbox_inches='tight')
-print("✓ Saved: /home/dor/llms-are-acd/08_relative_improvement.png")
+out_file = OUTPUT_DIR / '08_relative_improvement.png'
+plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
 plt.close()
 
 
@@ -408,5 +421,5 @@ print("  🥈 Second:         DeepSeek-r1-1.5b (CV = 0.244)")
 print("  🥉 Third:          Qwen2.5-7b (CV = 0.394)")
 
 print("\n" + "="*70)
-print("All visualizations are ready in: /home/dor/llms-are-acd/")
+print(f"All visualizations are ready in: {OUTPUT_DIR}")
 print("="*70 + "\n")
