@@ -8,13 +8,36 @@ use of Large Language Models (LLMs) and Reinforcement Learning (RL) for Autonomo
 # Paper
 [IEEE CAI 2025 - Adaptive Cyber Defense Workshop: Paper Pre-print](https://arxiv.org/abs/2505.04843)
 
+# Quick Start: Run Proper Comparison with Cybermonics (1 LLM + 4 KEEP GNN RL Agents)
+
+See [RUN_CYBERMONICS_COMPARISON.md](RUN_CYBERMONICS_COMPARISON.md) for the exact command.
+
+**Key Configuration:**
+- **Episodes**: 2 (paper-parity)
+- **Steps per episode**: 500 (paper-parity) 
+- **Total steps**: 1000 (not 900)
+- **Red agent**: FiniteState (matches paper Fig. 4)
+- **Blue agents 0-3**: KEEP GNN PPO (pre-trained, matches paper)
+- **Blue agent 4**: LLM (DefenderAgent with DeepSeek-r1-1.5b)
+
+# Important: Submissions Explained
+
+There are **two different** blue-team submissions:
+
+| Submission | Location | RL Agents | Matches Paper |
+|---|---|---|---|
+| **Cybermonics** ✅ | `cage-challenge-4/CybORG/Evaluation/Cybermonics/` | KEEP GNN PPO (trained) | **YES** |
+| **LLMGym** | `cage-challenge-4/CybORG/Evaluation/llamagym/` | ReactRemoveBlueAgent (heuristic) | **NO** |
+
+**Use Cybermonics for paper-comparison experiments.**
+
 # Project Implementation Log
 
 Step-by-step implementation details for the ongoing "Beyond the Baseline" extension are tracked in [IMPLEMENTATION_CHANGELOG.md](IMPLEMENTATION_CHANGELOG.md).
 
 Current run profiles for reproducibility:
-- `quick` profile: development iteration profile.
-- `strict` profile: paper-parity lock (`max_eps=2`, `episode_length=500`).
+- `quick` profile: development iteration profile (`max_eps=30`, `episode_length=30`).
+- `strict` profile: paper-parity lock (`max_eps=2`, `episode_length=500`, total=1000 steps).
 
 Citation:
 ```latex

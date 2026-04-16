@@ -106,26 +106,66 @@ class CombinedWrapper(BaseWrapper):
 
 		combined_actions = {**phase_actions, **translated_graph_actions}
 
-		self.metrics_callback.on_step(combined_observations, combined_actions, self.phase_wrapper.env)
-		if phase_actions:
+		if ALL_LLM_AGENTS:
 			phase_obs, phase_rewards, phase_term, phase_trunc, phase_info = self.phase_wrapper.step(phase_actions)
+			observations = {**phase_obs}
+			rewards = {**phase_rewards}
+			terminated = {**phase_term}
+			truncated = {**phase_trunc}
+			info = {**phase_info}
+		else:
+			# Mixed mode (LLM + RL): execute exactly one environment step.
+			graph_obs, graph_rewards, graph_term, graph_trunc, graph_info = self.graph_wrapper.step(combined_actions)
 
-		# cybermonics wrapper
-		if graph_actions:
-			graph_obs, graph_rewards, graph_term, graph_trunc, graph_info = self.graph_wrapper.step(graph_actions)
-		# combine the outputs of both wrappers
-		observations = {**graph_obs, **phase_obs}
-		rewards = {**graph_rewards, **phase_rewards}
-		terminated = {**graph_term, **phase_term}
-		truncated = {**graph_trunc, **phase_trunc}
-		info = {**graph_info, **phase_info}
+			if NO_LLM_AGENTS:
+				observations = {**graph_obs}
+				rewards = {**graph_rewards}
+				terminated = {**graph_term}
+				truncated = {**graph_trunc}
+				info = {**graph_info}
+			else:
+				phase_observation = self.phase_wrapper.observation_change(
+					BLUE_AGENT_NAME,
+					self.phase_wrapper.env.get_observation(BLUE_AGENT_NAME)
+				)
+				phase_obs = {BLUE_AGENT_NAME: phase_observation}
+				phase_rewards = {BLUE_AGENT_NAME: graph_rewards.get(BLUE_AGENT_NAME, 0.0)}
+				phase_term = {BLUE_AGENT_NAME: graph_term.get(BLUE_AGENT_NAME, False)}
+				phase_trunc = {BLUE_AGENT_NAME: graph_trunc.get(BLUE_AGENT_NAME, False)}
+				phase_info = {BLUE_AGENT_NAME: graph_info.get(BLUE_AGENT_NAME, {})}
+
+				observations = {**graph_obs, **phase_obs}
+				rewards = {**graph_rewards, **phase_rewards}
+				terminated = {**graph_term, **phase_term}
+				truncated = {**graph_trunc, **phase_trunc}
+				info = {**graph_info, **phase_info}
+
+		if "__all__" in truncated:
+			for agent_name in observations:
+				terminated.setdefault(agent_name, False)
+				truncated[agent_name] = truncated["__all__"]
+
+		self.metrics_callback.on_step(combined_observations, combined_actions, rewards, self.phase_wrapper.env)
 
 		return observations, rewards, terminated, truncated, info
 
 	def reset(self, *args, **kwargs):
 		"""Ensures each agent gets the correct observation on reset."""
-		phase_obs, phase_info = self.phase_wrapper.reset(*args, **kwargs)
-		graph_obs, graph_info = self.graph_wrapper.reset(*args, **kwargs)
+		phase_obs, phase_info = ({}, {})
+		graph_obs, graph_info = ({}, {})
+
+		if ALL_LLM_AGENTS:
+			phase_obs, phase_info = self.phase_wrapper.reset(*args, **kwargs)
+		else:
+			graph_obs, graph_info = self.graph_wrapper.reset(*args, **kwargs)
+			if not NO_LLM_AGENTS:
+				phase_obs = {
+					BLUE_AGENT_NAME: self.phase_wrapper.observation_change(
+						BLUE_AGENT_NAME,
+						self.phase_wrapper.env.get_observation(BLUE_AGENT_NAME)
+					)
+				}
+				phase_info = {BLUE_AGENT_NAME: {}}
 
 		# Ensure blue_agent_0 is always included
 		if BLUE_AGENT_NAME not in phase_obs:

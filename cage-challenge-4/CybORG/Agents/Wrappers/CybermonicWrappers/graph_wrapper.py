@@ -73,10 +73,11 @@ class GraphWrapper(EnterpriseMAE):
         Args: 
             action: dict of {agent_id (int) : action_id (int)}
         '''
-        # Convert from model out to Action objects
+        # Convert model integer outputs to Action objects while preserving
+        # already-constructed CybORG actions (used by mixed LLM+RL mode).
         action = {
-            k:self.action_translator(k,v)
-            for k,v in action.items()
+            k: (self.action_translator(k, v) if isinstance(v, (int, np.integer)) else v)
+            for k, v in action.items()
         }
 
         # Gets the info from the tabular wrapper (4 dims per host, in order)

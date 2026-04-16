@@ -1,0 +1,50 @@
+{
+  "aggregate": {
+    "deepseek-r1-1.5b": {
+      "cases": 8,
+      "failed": 0,
+      "reward_mean": -3063.0041666666666,
+      "reward_std": 1292.4310700980773,
+      "hallucination_mean": 0.25258879828622766,
+      "hallucination_std": 0.05628597019147776
+    },
+    "qwen2.5-7b": {
+      "cases": 8,
+      "failed": 0,
+      "reward_mean": -12.683333333333334,
+      "reward_std": 1.7391728557628257,
+      "hallucination_mean": 0.026293103448275863,
+      "hallucination_std": 0.006359280452968599
+    }
+  },
+  "by_variant": {
+    "deepseek-r1-1.5b": {
+      "aggressive": {
+        "reward_mean": -3635.125,
+        "reward_std": 576.3415193051773,
+        "hallucination_mean": 0.2532565130260521,
+        "hallucination_std": 0.03264884414966539
+      },
+      "stealthy": {
+        "reward_mean": -2490.883333333333,
+        "reward_std": 1534.2562038872995,
+        "hallucination_mean": 0.25192108354640314,
+        "hallucination_std": 0.07259051019613479
+      }
+    },
+    "qwen2.5-7b": {
+      "aggressive": {
+        "reward_mean": -13.991666666666667,
+        "reward_std": 1.1431863365173671,
+        "hallucination_mean": 0.028735632183908046,
+        "hallucination_std": 0.004943865096001509
+      },
+      "stealthy": {
+        "reward_mean": -11.375,
+        "reward_std": 1.1485195785106241,
+        "hallucination_mean": 0.02385057471264368,
+        "hallucination_std": 0.006671371704737873
+      }
+    }
+  }
+}

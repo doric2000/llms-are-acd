@@ -1,0 +1,30 @@
+{
+  "original_paper": {
+    "ALL RL (paper)": {
+      "reward_mean": -493.0,
+      "reward_std": 95.9,
+      "runtime_sec": 45.2
+    },
+    "ALL LLM (paper)": {
+      "reward_mean": -2547.2,
+      "reward_std": 498.8,
+      "runtime_sec": 4704.6
+    }
+  },
+  "current_work": {
+    "deepseek-r1-1.5b": {
+      "reward_mean": -3063.0041666666666,
+      "reward_std": 1292.4310700980773,
+      "runtime_mean": 2617.980405375,
+      "runtime_std": 405.0787517484134,
+      "hallucination_mean": 0.25258879828622766
+    },
+    "qwen2.5-7b": {
+      "reward_mean": -12.683333333333334,
+      "reward_std": 1.7391728557628257,
+      "runtime_mean": 462.3868395,
+      "runtime_std": 9.356488052954566,
+      "hallucination_mean": 0.026293103448275863
+    }
+  }
+}

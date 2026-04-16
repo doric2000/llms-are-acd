@@ -27,4 +27,16 @@ CAGE4_RULES_PROMPT_PATH = "config/prompts/env_rules/cage4_rules_v2.yml"   # Alwa
 
 # Extra
 DEBUG_MODE = os.environ.get("CAGE4_DEBUG_MODE", "false").lower() in {"1", "true", "yes", "on"}
-TOTAL_STEPS_PROGRESS_BAR = 1000
+
+# Progress bar total: Use environment variables if set, otherwise default to 1000 (2 ep × 500 steps)
+def _get_progress_bar_total():
+    """Calculate progress bar total from max_eps and episode_length or use explicit env var."""
+    explicit_total = os.environ.get("CAGE4_PROGRESS_BAR_TOTAL")
+    if explicit_total:
+        return int(explicit_total)
+    
+    max_eps = int(os.environ.get("CAGE4_BASELINE_MAX_EPS", "2"))
+    episode_length = int(os.environ.get("CAGE4_BASELINE_EPISODE_LENGTH", "500"))
+    return max_eps * episode_length
+
+TOTAL_STEPS_PROGRESS_BAR = _get_progress_bar_total()  # Defaults to 1000 (2×500) or 900 (30×30)
