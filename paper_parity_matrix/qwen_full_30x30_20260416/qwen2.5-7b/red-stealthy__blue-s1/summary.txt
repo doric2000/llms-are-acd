@@ -1,0 +1,4 @@
+CybORG v4.0, Scenario4
+Author: LLM and RL Agent, Team: UCSC Autonomous Cybersecurity Lab, Technique: LLM+RL
+Average reward is: -10.1 with a standard deviation of 7.716306066398924
+Using agents {'blue_agent_0': ReactRemoveBlueAgent, 'blue_agent_1': ReactRemoveBlueAgent, 'blue_agent_2': ReactRemoveBlueAgent, 'blue_agent_3': ReactRemoveBlueAgent, 'blue_agent_4': DefenderAgent}

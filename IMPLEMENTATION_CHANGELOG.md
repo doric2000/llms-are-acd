@@ -169,7 +169,7 @@ Validate Step 2 and Step 3 changes in a real run path and fix any runtime defect
 
 1. Executed quick-profile smoke run with dummy model:
 - command used:
-	`/home/dor/llms-are-acd/cage-env/bin/python CybORG/Evaluation/llamagym/run_model_comparison.py --profile quick --max-eps 2 --episode-length 5 --models dummy --timeout-sec 120`
+   `./cage-env/bin/python CybORG/Evaluation/llamagym/run_model_comparison.py --profile quick --max-eps 2 --episode-length 5 --models dummy --timeout-sec 120`
 2. Fixed a runtime bug in commvector formatting:
 - numpy array commvectors caused ambiguous truth-value errors.
 - formatter now handles iterable vectors safely by converting to list before boolean mapping.
@@ -568,6 +568,47 @@ Observed behavior where progress appears to "restart" is typically a **case tran
    1. DeepSeek full case set
    2. Qwen full case set
 - This ensures same protocol and artifact schema for both models before cross-paper analysis.
+
+## Step 12: VPN Interruption Handling + Step 8 Rebuild
+
+Date: 2026-04-16  
+Status: In Progress (Rebuilt from scratch)
+
+### Incident
+
+During overnight execution, VPN/Ollama communication was unstable. To avoid mixing potentially degraded runs with valid runs, Step 8 outputs were invalidated and rebuilt.
+
+### Verification Performed
+
+1. Confirmed prior communication integrity for earlier validated run groups (Step 4-7 era outputs) by scanning logs:
+- `model_request_failed=0` across prior validated output roots.
+- Assistant responses present at scale, indicating successful LLM communication.
+
+2. Confirmed interrupted/partial state in previous Step 8 restart directory.
+
+### Corrective Action
+
+1. Stopped active Step 8 processes.
+2. Deleted prior Step 8 restart root:
+- `/home/dor/llms-are-acd/paper_parity_matrix/full_restart`
+3. Started a fresh Step 8 run from zero under a new root:
+- `/home/dor/llms-are-acd/paper_parity_matrix/step8_restart_20260416`
+
+### Rebuild Configuration (Paper-Term Compatible)
+
+- Model: `deepseek-r1-1.5b` (first), then `qwen2.5-7b`
+- Attackers: `b_line,meander` (aliases mapped to `aggressive,stealthy`)
+- Seeds: `101,102,103,104`
+- Episodes x steps: `30 x 30`
+- Matrix mode: `paper` (8 cases per model)
+
+### Auditability Notes
+
+- New run uses the same trace instrumentation:
+   - `step_trace.jsonl`
+   - `metrics_trace.jsonl`
+- New root path prevents contamination from invalidated artifacts.
+
 
 
 ## Step 9: Protocol Alignment + Full Clean Restart for Model Comparison

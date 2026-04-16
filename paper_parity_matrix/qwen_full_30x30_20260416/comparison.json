@@ -1,0 +1,193 @@
+{
+  "generated_at": "2026-04-16T11:06:10",
+  "run_profile": {
+    "profile_name": "quick",
+    "strict_mode": false,
+    "strict_baseline": {
+      "max_eps": 2,
+      "episode_length": 500
+    },
+    "effective": {
+      "max_eps": 30,
+      "episode_length": 30,
+      "models": [
+        "qwen2.5-7b"
+      ]
+    },
+    "matrix_mode": "paper",
+    "matrix_cases": [
+      {
+        "case_id": "red-aggressive__blue-s1",
+        "red_variant": "aggressive",
+        "scenario_seed": 101,
+        "scenario_id": "scenario_1"
+      },
+      {
+        "case_id": "red-aggressive__blue-s2",
+        "red_variant": "aggressive",
+        "scenario_seed": 102,
+        "scenario_id": "scenario_2"
+      },
+      {
+        "case_id": "red-aggressive__blue-s3",
+        "red_variant": "aggressive",
+        "scenario_seed": 103,
+        "scenario_id": "scenario_3"
+      },
+      {
+        "case_id": "red-aggressive__blue-s4",
+        "red_variant": "aggressive",
+        "scenario_seed": 104,
+        "scenario_id": "scenario_4"
+      },
+      {
+        "case_id": "red-stealthy__blue-s1",
+        "red_variant": "stealthy",
+        "scenario_seed": 101,
+        "scenario_id": "scenario_1"
+      },
+      {
+        "case_id": "red-stealthy__blue-s2",
+        "red_variant": "stealthy",
+        "scenario_seed": 102,
+        "scenario_id": "scenario_2"
+      },
+      {
+        "case_id": "red-stealthy__blue-s3",
+        "red_variant": "stealthy",
+        "scenario_seed": 103,
+        "scenario_id": "scenario_3"
+      },
+      {
+        "case_id": "red-stealthy__blue-s4",
+        "red_variant": "stealthy",
+        "scenario_seed": 104,
+        "scenario_id": "scenario_4"
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "qwen2.5-7b",
+      "case_count": 8,
+      "failed_case_count": 0,
+      "reward_mean": -12.683333333333334,
+      "reward_stdev": 1.859253989326202,
+      "hallucination_rate": 0.026293103448275863
+    }
+  ],
+  "cases": [
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-aggressive__blue-s1",
+      "case_id": "red-aggressive__blue-s1",
+      "red_variant": "aggressive",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1",
+      "return_code": 0,
+      "elapsed": "0:08:02.625368",
+      "reward_mean": -15.2,
+      "reward_stdev": 16.89398995358184,
+      "hallucination_rate": 0.028735632183908046
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-aggressive__blue-s2",
+      "case_id": "red-aggressive__blue-s2",
+      "red_variant": "aggressive",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2",
+      "return_code": 0,
+      "elapsed": "0:07:46.863348",
+      "reward_mean": -12.8,
+      "reward_stdev": 11.099549540409287,
+      "hallucination_rate": 0.0367816091954023
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-aggressive__blue-s3",
+      "case_id": "red-aggressive__blue-s3",
+      "red_variant": "aggressive",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3",
+      "return_code": 0,
+      "elapsed": "0:07:47.288074",
+      "reward_mean": -15.066666666666666,
+      "reward_stdev": 9.402616412589575,
+      "hallucination_rate": 0.02528735632183908
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-aggressive__blue-s4",
+      "case_id": "red-aggressive__blue-s4",
+      "red_variant": "aggressive",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4",
+      "return_code": 0,
+      "elapsed": "0:07:41.679252",
+      "reward_mean": -12.9,
+      "reward_stdev": 6.768843429959829,
+      "hallucination_rate": 0.02413793103448276
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-stealthy__blue-s1",
+      "case_id": "red-stealthy__blue-s1",
+      "red_variant": "stealthy",
+      "scenario_seed": 101,
+      "scenario_id": "scenario_1",
+      "return_code": 0,
+      "elapsed": "0:07:30.631206",
+      "reward_mean": -10.1,
+      "reward_stdev": 7.716306066398924,
+      "hallucination_rate": 0.027586206896551724
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-stealthy__blue-s2",
+      "case_id": "red-stealthy__blue-s2",
+      "red_variant": "stealthy",
+      "scenario_seed": 102,
+      "scenario_id": "scenario_2",
+      "return_code": 0,
+      "elapsed": "0:07:36.981754",
+      "reward_mean": -13.233333333333333,
+      "reward_stdev": 8.981526378737303,
+      "hallucination_rate": 0.029885057471264367
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-stealthy__blue-s3",
+      "case_id": "red-stealthy__blue-s3",
+      "red_variant": "stealthy",
+      "scenario_seed": 103,
+      "scenario_id": "scenario_3",
+      "return_code": 0,
+      "elapsed": "0:07:34.302224",
+      "reward_mean": -11.2,
+      "reward_stdev": 8.061830030971619,
+      "hallucination_rate": 0.01264367816091954
+    },
+    {
+      "name": "qwen2.5-7b",
+      "config_path": "/home/dor/llms-are-acd/CybORG/Agents/LLMAgents/config/model/qwen2.5-7b.yml",
+      "output_dir": "/home/dor/llms-are-acd/paper_parity_matrix/qwen_full_30x30_20260416/qwen2.5-7b/red-stealthy__blue-s4",
+      "case_id": "red-stealthy__blue-s4",
+      "red_variant": "stealthy",
+      "scenario_seed": 104,
+      "scenario_id": "scenario_4",
+      "return_code": 0,
+      "elapsed": "0:07:38.723490",
+      "reward_mean": -10.966666666666667,
+      "reward_stdev": 8.691983358971857,
+      "hallucination_rate": 0.02528735632183908
+    }
+  ]
+}

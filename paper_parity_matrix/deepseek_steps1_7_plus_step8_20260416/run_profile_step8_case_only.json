@@ -1,0 +1,24 @@
+{
+  "profile_name": "quick",
+  "strict_mode": false,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 30,
+    "episode_length": 30,
+    "models": [
+      "deepseek-r1-1.5b"
+    ]
+  },
+  "matrix_mode": "none",
+  "matrix_cases": [
+    {
+      "case_id": "single",
+      "red_variant": "stealthy",
+      "scenario_seed": 104,
+      "scenario_id": "single"
+    }
+  ]
+}

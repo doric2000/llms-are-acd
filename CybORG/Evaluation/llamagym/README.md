@@ -45,24 +45,71 @@ TOTAL_STEPS_PROGRESS_BAR = 1000 # TODO: Get this from the environment
 python3 -m CybORG.Evaluation.evaluation --max-eps 2 Evaluation/llamagym /tmp/GPT4o --wandb-entity <wandb username> --wandb-mode online
 ```
 
-## Run both experiment models automatically
+## Portable experiment commands (any machine)
 
-To run `deepseek-r1:1.5b` and `qwen2.5:7b` back-to-back with the same settings and generate a single comparison report:
+Use these commands from the repository root without hardcoded local paths.
 
+```bash
+# From repository root
+REPO_ROOT="$(pwd)"
+PYTHON_BIN="${REPO_ROOT}/cage-env/bin/python"
+RUNNER="CybORG/Evaluation/llamagym/run_model_comparison.py"
+
+# Optional: activate the venv as well
+source "${REPO_ROOT}/cage-env/bin/activate"
 ```
-python3 CybORG/Evaluation/llamagym/run_model_comparison.py --max-eps 2 --wandb-mode offline
+
+### Full paper-matrix run: DeepSeek (30x30, 8 cases)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix paper \
+    --red-variants b_line,meander \
+    --scenario-seeds 101,102,103,104 \
+    --models deepseek-r1-1.5b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/deepseek_full_30x30" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/deepseek_full_30x30_run.log"
+```
+
+### Full paper-matrix run: Qwen (30x30, 8 cases)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix paper \
+    --red-variants b_line,meander \
+    --scenario-seeds 101,102,103,104 \
+    --models qwen2.5-7b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/qwen_full_30x30" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/qwen_full_30x30_run.log"
+```
+
+### Single-case rerun (example: case 8 / stealthy + seed 104)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix none \
+    --red-variants meander \
+    --scenario-seeds 104 \
+    --models deepseek-r1-1.5b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/step8_case8_only" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/step8_case8_only_run.log"
 ```
 
 Use `--profile quick` for development runs and `--profile strict` for paper-parity runs.
 
-Examples:
+Strict baseline example (enforces 2 episodes and 500 steps):
 
 ```bash
-# Quick development profile
-python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile quick --wandb-mode offline
-
-# Strict paper-baseline profile (enforces 2 episodes and 500 steps)
-python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile strict --max-eps 2 --episode-length 500 --wandb-mode offline
+"${PYTHON_BIN}" "${RUNNER}" --profile strict --max-eps 2 --episode-length 500 --wandb-mode offline
 ```
 
 Outputs are written under `.dist/llm_compare/<timestamp>/` and include:

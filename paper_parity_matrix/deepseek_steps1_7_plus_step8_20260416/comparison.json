@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-04-16T09:54:23",
+  "source": "steps1_7_base_plus_replaced_step8_case",
+  "models": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_count": 8,
+      "failed_case_count": 0,
+      "reward_mean": -3063.0041666666666,
+      "reward_stdev": 1381.666931522463,
+      "hallucination_rate": 0.25258879828622766
+    }
+  ],
+  "cases": [
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-aggressive__blue-s1",
+      "red_variant": "aggressive",
+      "scenario_id": "scenario_1",
+      "scenario_seed": 101,
+      "return_code": 0,
+      "elapsed": "0:46:26.349819",
+      "reward_mean": -3684,
+      "reward_stdev": 185.26197667087544,
+      "hallucination_rate": 0.2725450901803607
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-aggressive__blue-s2",
+      "red_variant": "aggressive",
+      "scenario_id": "scenario_2",
+      "scenario_seed": 102,
+      "return_code": 0,
+      "elapsed": "0:46:53.996014",
+      "reward_mean": -4297,
+      "reward_stdev": 207.88939366884497,
+      "hallucination_rate": 0.2955911823647295
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-aggressive__blue-s3",
+      "red_variant": "aggressive",
+      "scenario_id": "scenario_3",
+      "scenario_seed": 103,
+      "return_code": 0,
+      "elapsed": "0:46:39.617434",
+      "reward_mean": -3843.5,
+      "reward_stdev": 2117.78480965371,
+      "hallucination_rate": 0.23246492985971945
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-aggressive__blue-s4",
+      "red_variant": "aggressive",
+      "scenario_id": "scenario_4",
+      "scenario_seed": 104,
+      "return_code": 0,
+      "elapsed": "0:45:12.089989",
+      "reward_mean": -2716,
+      "reward_stdev": 33.94112549695428,
+      "hallucination_rate": 0.2124248496993988
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-stealthy__blue-s1",
+      "red_variant": "stealthy",
+      "scenario_id": "scenario_1",
+      "scenario_seed": 101,
+      "return_code": 0,
+      "elapsed": "0:45:52.665779",
+      "reward_mean": -2419.5,
+      "reward_stdev": 420.72853480599576,
+      "hallucination_rate": 0.19739478957915832
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-stealthy__blue-s2",
+      "red_variant": "stealthy",
+      "scenario_id": "scenario_2",
+      "scenario_seed": 102,
+      "return_code": 0,
+      "elapsed": "0:45:21.057437",
+      "reward_mean": -3580,
+      "reward_stdev": 2350.422940664084,
+      "hallucination_rate": 0.19238476953907815
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-stealthy__blue-s3",
+      "red_variant": "stealthy",
+      "scenario_id": "scenario_3",
+      "scenario_seed": 103,
+      "return_code": 0,
+      "elapsed": "0:46:47.514635",
+      "reward_mean": -3945,
+      "reward_stdev": 657.6093065034892,
+      "hallucination_rate": 0.24549098196392785
+    },
+    {
+      "name": "deepseek-r1-1.5b",
+      "case_id": "red-stealthy__blue-s4",
+      "red_variant": "stealthy",
+      "scenario_id": "scenario_4",
+      "scenario_seed": 104,
+      "return_code": 0,
+      "elapsed": "0:25:50.552136",
+      "reward_mean": -19.033333333333335,
+      "reward_stdev": 10.267065972231839,
+      "hallucination_rate": 0.3724137931034483
+    }
+  ]
+}

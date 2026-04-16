@@ -1,0 +1,16 @@
+{
+  "name": "quick",
+  "strict_mode": false,
+  "strict_baseline": {
+    "max_eps": 2,
+    "episode_length": 500
+  },
+  "effective": {
+    "max_eps": 30,
+    "episode_length": 30,
+    "scenario_name": "Scenario4",
+    "scenario_id": "scenario_3",
+    "red_variant": "aggressive",
+    "red_agent_class": "AggressiveFSMAgent"
+  }
+}

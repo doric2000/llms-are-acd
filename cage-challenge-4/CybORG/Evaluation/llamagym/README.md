@@ -43,14 +43,63 @@ TOTAL_STEPS_PROGRESS_BAR = 1000 # TODO: Get this from the environment
 python3 -m CybORG.Evaluation.evaluation --max-eps 2 Evaluation/llamagym /tmp/GPT4o --wandb-entity <wandb username> --wandb-mode online
 ```
 
-## Run both default experiment models automatically
+## Portable experiment commands (any machine)
 
-The comparison runner defaults to:
-- `deepseek-r1-1.5b`
-- `qwen2.5-7b`
+Use these commands from the repository root without hardcoded local paths.
 
 ```bash
-python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile quick --wandb-mode offline
+# From repository root
+REPO_ROOT="$(pwd)"
+PYTHON_BIN="${REPO_ROOT}/cage-env/bin/python"
+RUNNER="CybORG/Evaluation/llamagym/run_model_comparison.py"
+
+# Optional: activate the venv as well
+source "${REPO_ROOT}/cage-env/bin/activate"
+```
+
+### Full paper-matrix run: DeepSeek (30x30, 8 cases)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix paper \
+    --red-variants b_line,meander \
+    --scenario-seeds 101,102,103,104 \
+    --models deepseek-r1-1.5b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/deepseek_full_30x30" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/deepseek_full_30x30_run.log"
+```
+
+### Full paper-matrix run: Qwen (30x30, 8 cases)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix paper \
+    --red-variants b_line,meander \
+    --scenario-seeds 101,102,103,104 \
+    --models qwen2.5-7b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/qwen_full_30x30" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/qwen_full_30x30_run.log"
+```
+
+### Single-case rerun (example: case 8 / stealthy + seed 104)
+
+```bash
+"${PYTHON_BIN}" "${RUNNER}" \
+    --profile quick \
+    --max-eps 30 \
+    --episode-length 30 \
+    --matrix none \
+    --red-variants meander \
+    --scenario-seeds 104 \
+    --models deepseek-r1-1.5b \
+    --output-root "${REPO_ROOT}/paper_parity_matrix/step8_case8_only" \
+    2>&1 | tee "${REPO_ROOT}/paper_parity_matrix/step8_case8_only_run.log"
 ```
 
 Use profiles:
@@ -60,7 +109,7 @@ Use profiles:
 Strict example:
 
 ```bash
-python3 CybORG/Evaluation/llamagym/run_model_comparison.py --profile strict --max-eps 2 --episode-length 500 --wandb-mode offline
+"${PYTHON_BIN}" "${RUNNER}" --profile strict --max-eps 2 --episode-length 500 --wandb-mode offline
 ```
 
 Each run saves profile metadata in `run_profile.json` under the output root and per-model directories.

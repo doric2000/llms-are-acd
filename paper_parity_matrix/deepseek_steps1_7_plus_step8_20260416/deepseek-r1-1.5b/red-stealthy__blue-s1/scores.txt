@@ -1,0 +1,7 @@
+reward_mean: -2419.5
+reward_stdev: 420.72853480599576
+hallucination_rate: 0.19739478957915832
+recovery_precision: 0.3175440530368644
+clean_hosts_mean: 0.7951780399922743
+mttr: 1.5639904610492845
+red_impact_count: 0
