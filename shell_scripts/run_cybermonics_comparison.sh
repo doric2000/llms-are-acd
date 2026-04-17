@@ -7,10 +7,26 @@ echo "Profile: 2 episodes × 500 steps per episode"
 echo ""
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_NAME="env-cage"
+
+if [ ! -d "$REPO_ROOT/cage-challenge-4" ]; then
+  echo "cage-challenge-4 missing. Running installer..."
+  bash "$REPO_ROOT/shell_scripts/install_unified.sh"
+fi
+
+if [ ! -x "$REPO_ROOT/$ENV_NAME/bin/python" ]; then
+  echo "Virtual environment '$ENV_NAME' missing. Creating..."
+  python -m venv "$REPO_ROOT/$ENV_NAME"
+fi
+
+source "$REPO_ROOT/$ENV_NAME/bin/activate"
+python -m pip install --upgrade pip >/dev/null
+python -m pip install -r "$REPO_ROOT/requirements.txt"
+
 cd "$REPO_ROOT/cage-challenge-4"
 
 # Activate environment
-source "$REPO_ROOT/cage-env/bin/activate"
+source "$REPO_ROOT/$ENV_NAME/bin/activate"
 
 # Set strict baseline enforcement
 export CAGE4_ENFORCE_STRICT_BASELINE=true
@@ -21,7 +37,7 @@ export CAGE4_BASELINE_EPISODE_LENGTH=500
 export CAGE4_RED_AGENT_VARIANT=finite_state
 
 # Set LLM configuration (use DeepSeek)
-export CAGE4_MODEL_CONFIG=config/model/ollama-deepseek-r1-1.5b.yml
+export CAGE4_MODEL_CONFIG=CybORG/Agents/LLMAgents/config/model/ollama-deepseek-r1-8b.yml
 
 # Create output directory
 OUTPUT_DIR="$REPO_ROOT/results/paper_comparison_deepseek_keep_strict"

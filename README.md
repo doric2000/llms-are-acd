@@ -8,6 +8,11 @@ It is also part of the course project **Advanced Subjects In Cyber Protection**.
 - Original paper: [Large Language Models are Autonomous Cyber Defenders (arXiv:2505.04843)](https://arxiv.org/abs/2505.04843)
 - Our paper (this repo): `pdf/LaTeX/LLMRL_Baruh_Dor_2026.pdf`
 
+## Agent guides
+
+- **[Cybermonic RL agent guide](docs/CYBERMONIC_RL_AGENT_GUIDE.md)** — how Cybermonic defenders are built and trained (PPO, GNN stack, hyperparameters, checkpoints, extending training).
+- **[LLM defender agent guide](docs/LLM_DEFENDER_AGENT_GUIDE.md)** — how the LLM blue policy is wired (`DefenderAgent`, configs, backends), YAML model/prompt files, inference-time algorithms, and how to run evaluations.
+
 ## What We Added
 
 Compared to the original project, this extension adds a small but concrete research layer focused on hallucination control, reproducibility, and paper-parity evaluation:
@@ -59,23 +64,89 @@ From that comparison artifact:
 
 Use these values with protocol/model-context caveats from the docs before drawing direct paper claims.
 
-## Quick Start
+## Install and Run Simulation
+
+### Simplified Installation
+
+This repository includes an automatic installation script to make setup simple and consistent.
 
 From repository root:
 
 ```bash
-# 1) Activate environment
-source cage-env/bin/activate
+chmod +x shell_scripts/install_unified.sh
+./shell_scripts/install_unified.sh
+```
 
-# 2) Strict paper-style run (1 LLM + 4 KEEP, 2x500)
+What this script does:
+- Clones `cage-challenge-4` if needed.
+- Creates and configures virtual environment (`env-cage`).
+- Installs CybORG package and extension components.
+- Installs root dependencies from `requirements.txt`.
+- Applies compatible dependency configuration for this project.
+
+Optional tools for online logging:
+
+```bash
+pip install wandb weave
+```
+
+### Important: Activate Environment
+
+After installation, activate virtual environment before running commands:
+
+```bash
+source env-cage/bin/activate
+python -m CybORG.Evaluation.evaluation
+```
+
+Activation required for each new terminal session.
+
+### Installation Modes
+
+Installer supports:
+- **Core mode**: basic CAGE-4 with standard agents.
+- **Extended mode**: CAGE-4 plus Cybermonic + LLM extensions.
+
+Default mode is extended. Some package version conflict warnings may appear; this is expected for this stack.
+
+### Run Simulation
+
+Strict paper-style run (1 LLM + 4 KEEP, 2x500):
+
+```bash
 bash shell_scripts/run_cybermonics_strict.sh deepseek
 # or
 bash shell_scripts/run_cybermonics_strict.sh qwen
 ```
 
+Comparison helper run:
+
+```bash
+bash shell_scripts/run_cybermonics_comparison.sh
+```
+
+### Training Cybermonic Agents
+
+If extended installation enabled, you can train Cybermonic agents directly:
+
+```bash
+source env-cage/bin/activate
+source .env
+
+python cybermonic_train.py my_agent
+
+# Custom architecture example
+python cybermonic_train.py my_agent --hidden 512 --embedding 256
+```
+
+Training checkpoints are saved in `checkpoints/`.
+
 For command details and caveats:
-- `docs/RUN_CYBERMONICS_COMPARISON.md`
-- `docs/README_EXPERIMENT_IMPROVEMENTS.md`
+
+- [`docs/RUN_CYBERMONICS_COMPARISON.md`](docs/RUN_CYBERMONICS_COMPARISON.md)
+- [`docs/README_EXPERIMENT_IMPROVEMENTS.md`](docs/README_EXPERIMENT_IMPROVEMENTS.md)
+- [Cybermonic RL agent guide](docs/CYBERMONIC_RL_AGENT_GUIDE.md)
+- [LLM defender agent guide](docs/LLM_DEFENDER_AGENT_GUIDE.md)
 
 ## Repository Map
 
@@ -83,7 +154,7 @@ For command details and caveats:
 - `CybORG/Evaluation/` - evaluation entry points and comparison runner additions.
 - `cage-challenge-4/` - challenge runtime tree used in end-to-end execution.
 - `results/paper_parity_matrix/` - canonical comparison outputs, traces, and summary artifacts.
-- `docs/` - implementation changelog, reproducibility notes, and experiment documentation.
+- `docs/` - implementation changelog, reproducibility notes, and experiment documentation (including [RL](docs/CYBERMONIC_RL_AGENT_GUIDE.md) and [LLM](docs/LLM_DEFENDER_AGENT_GUIDE.md) agent guides).
 - `shell_scripts/` - runnable shell entrypoints (`run_cybermonics_strict.sh`, `run_cybermonics_comparison.sh`).
 - `plot_scripts/` - plotting utilities (including parity/comparison plotting).
 

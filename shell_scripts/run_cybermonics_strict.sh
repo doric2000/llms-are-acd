@@ -26,6 +26,21 @@
 set -e  # Exit on error
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_NAME="env-cage"
+
+if [ ! -d "$REPO_ROOT/cage-challenge-4" ]; then
+  echo "cage-challenge-4 missing. Running installer..."
+  bash "$REPO_ROOT/shell_scripts/install_unified.sh"
+fi
+
+if [ ! -x "$REPO_ROOT/$ENV_NAME/bin/python" ]; then
+  echo "Virtual environment '$ENV_NAME' missing. Creating..."
+  python -m venv "$REPO_ROOT/$ENV_NAME"
+fi
+
+source "$REPO_ROOT/$ENV_NAME/bin/activate"
+python -m pip install --upgrade pip >/dev/null
+python -m pip install -r "$REPO_ROOT/requirements.txt"
 
 # Parse model argument (default: deepseek)
 MODEL="${1:-deepseek}"
@@ -71,7 +86,7 @@ echo ""
 
 # Activate environment
 echo "[1/5] Activating environment..."
-source "$REPO_ROOT/cage-env/bin/activate"
+source "$REPO_ROOT/$ENV_NAME/bin/activate"
 
 # Set directory
 cd "$REPO_ROOT/cage-challenge-4"
