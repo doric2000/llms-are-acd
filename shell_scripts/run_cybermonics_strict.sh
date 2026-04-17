@@ -52,7 +52,7 @@ SEED="${2:-}"
 case "$MODEL" in
   deepseek)
     MODEL_NAME="DeepSeek-r1-1.5b"
-    MODEL_CONFIG="ollama-deepseek-r1-8b.yml"
+    MODEL_CONFIG="deepseek-r1-1.5b.yml"
     OUTPUT_SUFFIX="deepseek"
     ;;
   qwen)

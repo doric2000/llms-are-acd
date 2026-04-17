@@ -433,7 +433,7 @@ Our autonomous defender is architected as a modular cognitive engine designed to
 Following the "Hybrid" configuration evaluated in the original study, we utilize a team consisting of \textbf{one LLM-driven agent} (Blue Agent 4) operating alongside \textbf{four pre-trained RL agents} (KEEP GNN PPO). The agents operate under a decentralized POMDP (Partially Observable Markov Decision Process).
 
 \begin{itemize}
-    \item \textbf{The Adapter Interface:} We utilize a customized wrapper that translates CybORG's numerical observation vectors into structured natural language. A significant enhancement in our implementation is the \textbf{IOC-Priority Encoding}. Instead of generic alerts, the adapter assigns a priority score $p(v) \in \{0,1,2,3\}$ to each host~$v$ based on Indicators of Compromise~\cite{arXiv:2410.17351}: $p{=}3$ for reconnaissance (decoy access), $p{=}2$ for exploit-phase files, $p{=}1$ for privilege-escalation files, and $p{=}0$ for clean hosts.
+    \item \textbf{The Adapter Interface:} We utilize a customized wrapper that translates CybORG's numerical observation vectors into structured natural language. A significant enhancement in our implementation is the \textbf{IOC-Priority Encoding}. Instead of generic alerts, the adapter assigns a priority score $p(v) \in \{0,1,2,3\}$ to each host~$v$ based on Indicators of Compromise~\cite{arXiv:2410.17351}: $p{=}3$ for privilege-escalation IOC files (e.g., \texttt{escalate.sh/exe}), $p{=}2$ for user-level exploit files (e.g., \texttt{cmd.sh/exe}) or session anomalies, $p{=}1$ for anomalous process activity, and $p{=}0$ for clean hosts.
     
     \item \textbf{Novel Extension, Chain-of-Self-Correction (CoSC):} To mitigate hallucinations, we implement an iterative self-correction loop governed by the \textbf{IOC-based expert rule}~\cite{arXiv:2410.17351}:
 \begin{equation}
@@ -442,7 +442,6 @@ Following the "Hybrid" configuration evaluated in the original study, we utilize
   \pi_E(h_t) {=}
   \begin{cases}
     \texttt{Recover},      & p(v) \geq 1 \;\text{(host IOCs)}, \\
-    \texttt{CtrlTraffic},  & \text{network IOCs}, \\
     \texttt{Investigate},  & \text{otherwise}.
   \end{cases}
 \end{equation}
@@ -464,13 +463,13 @@ Before an action is committed, a preventative semantic gate validates the candid
            \textbf{if} $\hat{a}_t \notin \mathcal{A}_{\mathrm{valid}}$
            or JSON fails $\to$ append correction, $k{+}{+}$, redo
     \STATE \textbf{Gate~2 -- IOC Rule:}
-           \textbf{if} $\max_v p(v){\geq}1$ and
+           \textbf{if} $\max_v p(v){\geq}2$ and
            $\hat{a}_t \notin \{\texttt{Remove},\texttt{Restore}\}$
            $\to$ append ``IOCs active'', $k{+}{+}$, redo
     \STATE \textbf{Gate~3 -- Logic:}
            \textbf{if} $\hat{a}_t{=}\texttt{Restore}$ and
-           $p(\mathrm{target}){=}0$
-           $\to$ append ``Host clean'', $k{+}{+}$, redo
+           $p(\mathrm{target}){<}2$
+           $\to$ append ``Host not severely compromised'', $k{+}{+}$, redo
     \RETURN $\hat{a}_t$ \COMMENT{Passes all gates}
 \ENDWHILE
 \RETURN \texttt{Sleep} \COMMENT{Safe fallback (abstention)}
@@ -617,7 +616,7 @@ The transition of Large Language Models from generative assistants to autonomous
 Traditional RL models function as "black boxes," issuing defensive commands without justification. This opacity is unacceptable in a live enterprise environment where actions like \texttt{Restore} or \texttt{BlockTrafficZone} severely disrupt business continuity. Our hybrid ACD system replaces raw numerical outputs with a natural language "Thought Trace." Because the CoSC semantic gate actively filters out logical hallucinations, SOC analysts can interact with a smart alert system that not only isolates a compromised host but provides a verifiable, step-by-step rationale grounded in specific Indicators of Compromise (IOCs). This transforms the AI from a black-box actor into an accountable digital team member.
 
 \subsection{Data Privacy and Air-Gapped Execution}
-A fundamental flaw in previous LLM-based ACD research has been the reliance on proprietary, cloud-hosted APIs (e.g., GPT-4). Sending sensitive network telemetry, topology details, and vulnerability states to external servers violates basic operational security principles. By achieving RL-parity with small, heavily quantized models (DeepSeek-R1-1.5b and Qwen-2.5-7b) running on local infrastructure, we demonstrate the viability of "Private Autonomous Defense." Operating on local hardware allows the ACD system to function within heavily restricted or entirely air-gapped environments, ensuring that strategic defensive logic and proprietary network data never leave the corporate perimeter.
+A fundamental flaw in previous LLM-based ACD research has been the reliance on proprietary, cloud-hosted APIs (e.g., GPT-4). Sending sensitive network telemetry, topology details, and vulnerability states to external servers violates basic operational security principles. By achieving RL-parity with small, efficiently quantized models (DeepSeek-R1-1.5b and Qwen-2.5-7b) served via Ollama on a dedicated on-premises GPU server, we demonstrate the viability of ``Private Autonomous Defense.'' Hosting inference entirely within the organizational perimeter ensures that strategic defensive logic and proprietary network telemetry never traverse external networks, making this architecture compatible with air-gapped or heavily regulated environments.
 
 \section{Future Research Directions}
 While the integration of the Chain-of-Self-Correction (CoSC) mechanism successfully bridged the performance gap between LLMs and RL agents, this study opens several promising avenues for future exploration:

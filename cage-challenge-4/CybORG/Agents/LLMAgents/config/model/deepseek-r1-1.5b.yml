@@ -1,5 +1,5 @@
 backend: "ollama"
-model_name: "gemma4:e4b"
+model_name: "deepseek-r1:1.5b"
 base_url: "http://10.100.102.201:11435/v1"
 batch_size: 1
 seed: 42069
@@ -7,7 +7,7 @@ episodes: 1000
 schema_constraints: true
 self_correction: true
 repair_attempts: 3
-request_timeout_sec: 60
+request_timeout_sec: 120
 max_retries: 0
 keep_alive: "0m"
 ollama_options:
@@ -15,4 +15,4 @@ ollama_options:
 generate:
   max_new_tokens: 512
   max_length: 1024
-  temperature: 0.2
+  temperature: 1.0
