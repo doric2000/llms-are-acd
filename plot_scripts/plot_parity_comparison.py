@@ -1,550 +1,118 @@
 #!/usr/bin/env python3
-"""
-Matplotlib visualization of CAGE Challenge 4 Parity Comparison Results
-Comparing baseline, UCSC hybrid, RL expert, and local implementations
-SEPARATE DIAGRAMS VERSION - Each visualization in its own figure
+"""Create a single graph showing total hallucinations vs repaired hallucinations.
+
+The figure uses one grouped bar chart with one pair of bars per model:
+total hallucinations and repaired hallucinations. The percentage of
+successful fixes is annotated above the repaired bar.
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.patches import Rectangle
 from pathlib import Path
 import json
 
-# Set style
-plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
-plt.rcParams['font.size'] = 11
-plt.rcParams['axes.grid'] = True
-plt.rcParams['grid.alpha'] = 0.3
+import matplotlib.pyplot as plt
+import numpy as np
 
-# Output directory for generated figures
 OUTPUT_DIR = Path(__file__).resolve().parent / "assets"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# Data from parity comparison table
-models = [
-    'Baseline\n(All-LLM)',
-    'UCSC Hybrid\n(LLM + RL)',
-    'KEEP RL Expert\n(Pure RL)',
-    'Ours: Enhanced\nHybrid (Qwen)',
-    'Ours: Enhanced\nHybrid (DeepSeek)'
+QWEN_SUMMARY = Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_qwen" / "results" / "summary.json"
+DEEPSEEK_SUMMARY = Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_deepseek" / "results" / "summary.json"
+OUTPUT_FILE = OUTPUT_DIR / "09_hallucinations_vs_repairs.png"
+
+
+def load_summary(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+qwen = load_summary(QWEN_SUMMARY)["hallucination"]
+deepseek = load_summary(DEEPSEEK_SUMMARY)["hallucination"]
+
+models = ["DeepSeek-r1-1.5b", "Qwen-2.5"]
+total_hallucinations = [deepseek["total_hallucination_count"], qwen["total_hallucination_count"]]
+repaired_hallucinations = [deepseek["repair_success_count"], qwen["repair_success_count"]]
+repair_success_rates = [
+    deepseek["repair_success_count"] / deepseek["repair_attempt_count"] * 100.0,
+    qwen["repair_success_count"] / qwen["repair_attempt_count"] * 100.0,
 ]
 
-rewards_mean = [-2547.2, -1600, -493.0, -866.5, -477.5]
-rewards_std = [498.8, 700, 95.9, 341.53, 116.67]
-cv_values = [abs(std / mean) for mean, std in zip(rewards_mean, rewards_std)]
+plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
+fig, ax = plt.subplots(figsize=(11, 7))
 
-colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
-edge_colors = ['#C92A2A', '#0A8080', '#0D6BA3', '#DD6D3D', '#4A9B7F']
+x = np.arange(len(models))
+bar_width = 0.34
+edge_color = "#2F2F2F"
 
-# ============================================================================
-# 1. Mean Reward Comparison with Error Bars
-# ============================================================================
-fig1, ax1 = plt.subplots(figsize=(12, 7))
-x_pos = np.arange(len(models))
-bars = ax1.bar(x_pos, rewards_mean, yerr=rewards_std, capsize=10, 
-               color=colors, edgecolor=edge_colors, linewidth=2.5, alpha=0.8, 
-               error_kw={'elinewidth': 2.5, 'capthick': 3})
-
-ax1.set_ylabel('Mean Reward (μ)', fontsize=14, fontweight='bold')
-ax1.set_xlabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax1.set_title('Mean Reward Comparison with Standard Deviation\nCAGE Challenge 4 (1 LLM + 4 RL, 2×500 Steps)', 
-              fontsize=15, fontweight='bold', pad=20)
-ax1.set_xticks(x_pos)
-ax1.set_xticklabels(models, fontsize=12)
-ax1.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
-ax1.grid(axis='y', alpha=0.4, linewidth=0.8)
-
-# Add value labels on bars
-for i, (bar, mean, std) in enumerate(zip(bars, rewards_mean, rewards_std)):
-    height = bar.get_height()
-    ax1.text(bar.get_x() + bar.get_width()/2., height,
-             f'{mean:.1f}\n±{std:.1f}',
-             ha='center', va='bottom' if height > 0 else 'top', 
-             fontsize=11, fontweight='bold')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '01_mean_reward_comparison.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 9. Hallucinations vs Successful Self-Corrections (Qwen vs DeepSeek)
-# ============================================================================
-strict_summary_paths = {
-    "Qwen2.5-7b": Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_qwen" / "results" / "summary.json",
-    "DeepSeek-r1-1.5b": Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_deepseek" / "results" / "summary.json",
-}
-
-
-def load_hallucination_data(model_name, summary_path):
-    # Fallback values are the latest strict-run numbers discussed in this workspace.
-    fallback = {
-        "Qwen2.5-7b": {"hallucinations": 26, "self_corrections": 9},
-        "DeepSeek-r1-1.5b": {"hallucinations": 229, "self_corrections": 89},
-    }
-
-    try:
-        with open(summary_path, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-        hallucination = payload.get("hallucination", {})
-        return {
-            "hallucinations": int(hallucination.get("total_hallucination_count", 0)),
-            "self_corrections": int(hallucination.get("repair_success_count", 0)),
-        }
-    except (OSError, ValueError, TypeError, KeyError) as exc:
-        print(f"! Warning: Could not read {summary_path} ({exc}). Using fallback for {model_name}.")
-        return fallback[model_name]
-
-
-hall_data_qwen = load_hallucination_data("Qwen2.5-7b", strict_summary_paths["Qwen2.5-7b"])
-hall_data_deepseek = load_hallucination_data("DeepSeek-r1-1.5b", strict_summary_paths["DeepSeek-r1-1.5b"])
-
-hall_models = ["Qwen2.5-7b", "DeepSeek-r1-1.5b"]
-hallucination_counts = [hall_data_qwen["hallucinations"], hall_data_deepseek["hallucinations"]]
-self_correction_counts = [hall_data_qwen["self_corrections"], hall_data_deepseek["self_corrections"]]
-
-fig9, ax9 = plt.subplots(figsize=(12, 7))
-x = np.arange(len(hall_models))
-width = 0.35
-
-bars_hall = ax9.bar(
-    x - width / 2,
-    hallucination_counts,
-    width,
-    label="Total Hallucinations",
+bars_total = ax.bar(
+    x - bar_width / 2,
+    total_hallucinations,
+    width=bar_width,
     color="#E74C3C",
-    edgecolor="#922B21",
-    linewidth=2,
-    alpha=0.85,
+    edgecolor=edge_color,
+    linewidth=1.2,
+    alpha=0.9,
+    label="Total hallucinations",
 )
-bars_fix = ax9.bar(
-    x + width / 2,
-    self_correction_counts,
-    width,
-    label="Successful Self-Corrections",
+
+bars_repaired = ax.bar(
+    x + bar_width / 2,
+    repaired_hallucinations,
+    width=bar_width,
     color="#2ECC71",
-    edgecolor="#1E8449",
-    linewidth=2,
-    alpha=0.85,
+    edgecolor=edge_color,
+    linewidth=1.2,
+    alpha=0.9,
+    label="Repaired hallucinations",
 )
 
-ax9.set_title(
-    "Hallucinations vs Successful Self-Corrections\nStrict Parity Runs (2×500 Steps)",
-    fontsize=15,
+for bar, total in zip(bars_total, total_hallucinations):
+    height = bar.get_height()
+    ax.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{int(height)}",
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontweight="bold",
+    )
+
+for bar, rate in zip(bars_repaired, repair_success_rates):
+    height = bar.get_height()
+    ax.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{rate:.1f}%",
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontweight="bold",
+    )
+
+ax.set_title(
+    "Total Hallucinations vs Repaired Hallucinations\nSuccessful fix rate shown above repaired bars",
+    fontsize=16,
     fontweight="bold",
-    pad=20,
+    pad=18,
 )
-ax9.set_xlabel("Model", fontsize=14, fontweight="bold")
-ax9.set_ylabel("Count", fontsize=14, fontweight="bold")
-ax9.set_xticks(x)
-ax9.set_xticklabels(hall_models, fontsize=12)
-ax9.grid(axis="y", alpha=0.4, linewidth=0.8)
-ax9.legend(fontsize=12, loc="upper left")
-
-for bar in bars_hall:
-    height = bar.get_height()
-    ax9.text(
-        bar.get_x() + bar.get_width() / 2,
-        height,
-        f"{int(height)}",
-        ha="center",
-        va="bottom",
-        fontsize=11,
-        fontweight="bold",
-    )
-
-for bar in bars_fix:
-    height = bar.get_height()
-    ax9.text(
-        bar.get_x() + bar.get_width() / 2,
-        height,
-        f"{int(height)}",
-        ha="center",
-        va="bottom",
-        fontsize=11,
-        fontweight="bold",
-    )
-
-for idx, model in enumerate(hall_models):
-    hall = hallucination_counts[idx]
-    fixed = self_correction_counts[idx]
-    rate = (fixed / hall * 100.0) if hall else 0.0
-    ax9.text(
-        x[idx],
-        max(hall, fixed) + max(hallucination_counts) * 0.05,
-        f"Fix Rate: {rate:.1f}%",
-        ha="center",
-        va="bottom",
-        fontsize=11,
-        fontweight="bold",
-        color="#34495E",
-    )
-
-ax9.set_ylim(0, max(hallucination_counts) * 1.25 if hallucination_counts else 1)
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / "09_hallucination_and_self_correction.png"
-plt.savefig(out_file, dpi=300, bbox_inches="tight")
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 2. Improvement Percentage (vs Baseline)
-# ============================================================================
-fig2, ax2 = plt.subplots(figsize=(12, 7))
-improvement_vals = []
-improvement_labels = []
-improvement_colors_filt = []
-baseline_reward = -2547.2
-
-for i, (model, reward) in enumerate(zip(models, rewards_mean)):
-    if i > 0:
-        imp = ((baseline_reward - reward) / abs(baseline_reward)) * 100
-        improvement_vals.append(imp)
-        improvement_labels.append(model)
-        improvement_colors_filt.append(colors[i])
-
-x_pos_imp = np.arange(len(improvement_vals))
-bars_imp = ax2.bar(x_pos_imp, improvement_vals, color=improvement_colors_filt, 
-                   edgecolor=edge_colors[1:], linewidth=2.5, alpha=0.8, width=0.6)
-
-ax2.set_ylabel('Improvement vs Baseline (%)', fontsize=14, fontweight='bold')
-ax2.set_xlabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax2.set_title('Performance Improvement vs GPT-4o Mini Baseline\nCAGE Challenge 4 Parity Comparison', 
-              fontsize=15, fontweight='bold', pad=20)
-ax2.set_xticks(x_pos_imp)
-ax2.set_xticklabels(improvement_labels, fontsize=12)
-ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
-ax2.grid(axis='y', alpha=0.4, linewidth=0.8)
-ax2.set_ylim(0, max(improvement_vals) * 1.15)
-
-# Add percentage labels
-for bar, val in zip(bars_imp, improvement_vals):
-    height = bar.get_height()
-    ax2.text(bar.get_x() + bar.get_width()/2., height,
-             f'+{val:.1f}%',
-             ha='center', va='bottom', fontsize=12, fontweight='bold', color='darkgreen')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '02_improvement_percentage.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 3. Standard Deviation Comparison
-# ============================================================================
-fig3, ax3 = plt.subplots(figsize=(12, 7))
-bars_std = ax3.bar(x_pos, rewards_std, color=colors, edgecolor=edge_colors, 
-                   linewidth=2.5, alpha=0.8)
-
-ax3.set_ylabel('Standard Deviation (σ)', fontsize=14, fontweight='bold')
-ax3.set_xlabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax3.set_title('Reward Variability Across Episodes\nHigher Variability = Less Stable Performance', 
-              fontsize=15, fontweight='bold', pad=20)
-ax3.set_xticks(x_pos)
-ax3.set_xticklabels(models, fontsize=12)
-ax3.grid(axis='y', alpha=0.4, linewidth=0.8)
-ax3.set_ylim(0, max(rewards_std) * 1.1)
-
-# Add value labels
-for bar, std in zip(bars_std, rewards_std):
-    height = bar.get_height()
-    ax3.text(bar.get_x() + bar.get_width()/2., height,
-             f'{std:.1f}',
-             ha='center', va='bottom', fontsize=11, fontweight='bold')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '03_standard_deviation.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 4. Coefficient of Variation (Stability)
-# ============================================================================
-fig4, ax4 = plt.subplots(figsize=(12, 7))
-bars_cv = ax4.bar(x_pos, cv_values, color=colors, edgecolor=edge_colors, 
-                  linewidth=2.5, alpha=0.8)
-
-ax4.set_ylabel('Coefficient of Variation (σ/|μ|)', fontsize=14, fontweight='bold')
-ax4.set_xlabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax4.set_title('Agent Performance Stability (Lower CV = More Consistent)\nCAGE Challenge 4', 
-              fontsize=15, fontweight='bold', pad=20)
-ax4.set_xticks(x_pos)
-ax4.set_xticklabels(models, fontsize=12)
-ax4.grid(axis='y', alpha=0.4, linewidth=0.8)
-ax4.set_ylim(0, max(cv_values) * 1.1)
-
-# Add value labels
-for bar, cv in zip(bars_cv, cv_values):
-    height = bar.get_height()
-    ax4.text(bar.get_x() + bar.get_width()/2., height,
-             f'{cv:.3f}',
-             ha='center', va='bottom', fontsize=11, fontweight='bold')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '04_stability_coefficient.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 5. Confidence Interval Visualization
-# ============================================================================
-fig5, ax5 = plt.subplots(figsize=(14, 8))
-y_positions = np.arange(len(models))
-
-for i, (model, mean, std) in enumerate(zip(models, rewards_mean, rewards_std)):
-    ci_lower = mean - 2*std
-    ci_upper = mean + 2*std
-    
-    # Draw confidence interval line
-    ax5.plot([ci_lower, ci_upper], [i, i], 'o-', linewidth=4, 
-             color=colors[i], markersize=10, markeredgecolor=edge_colors[i], 
-             markeredgewidth=2.5, alpha=0.85, label=model.replace('\n', ' '))
-    
-    # Mark mean
-    ax5.plot(mean, i, 'D', markersize=12, color=colors[i], 
-             markeredgecolor=edge_colors[i], markeredgewidth=2.5, zorder=5)
-    
-    # Add text annotations
-    ax5.text(ci_lower - 300, i, f'{ci_lower:.0f}', fontsize=10, 
-             ha='right', va='center', fontweight='bold')
-    ax5.text(ci_upper + 300, i, f'{ci_upper:.0f}', fontsize=10, 
-             ha='left', va='center', fontweight='bold')
-
-ax5.set_yticks(y_positions)
-ax5.set_yticklabels(models, fontsize=12)
-ax5.set_xlabel('Reward Value (μ)', fontsize=14, fontweight='bold')
-ax5.set_title('95% Confidence Intervals (Mean ± 2σ)\nEstimated Range of Expected Performance', 
-              fontsize=15, fontweight='bold', pad=20)
-ax5.axvline(x=0, color='black', linestyle='--', linewidth=1.5, alpha=0.5)
-ax5.grid(axis='x', alpha=0.4, linewidth=0.8)
-ax5.set_xlim(-3500, 500)
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '05_confidence_intervals.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 6. Summary Statistics Table
-# ============================================================================
-fig6, ax6 = plt.subplots(figsize=(14, 8))
-ax6.axis('off')
-
-# Create summary table
-summary_data = []
-for i, model in enumerate(models):
-    summary_data.append([
-        model.replace('\n', ' '),
-        f"{rewards_mean[i]:.1f}",
-        f"{rewards_std[i]:.1f}",
-        f"{cv_values[i]:.4f}"
-    ])
-
-table = ax6.table(cellText=summary_data,
-                  colLabels=['Configuration', 'Mean Reward (μ)', 'Std Dev (σ)', 'Stability (CV)'],
-                  cellLoc='center',
-                  loc='center',
-                  colWidths=[0.30, 0.25, 0.25, 0.20])
-
-table.auto_set_font_size(False)
-table.set_fontsize(12)
-table.scale(1, 3)
-
-# Style header
-for i in range(4):
-    table[(0, i)].set_facecolor('#2c3e50')
-    table[(0, i)].set_text_props(weight='bold', color='white', fontsize=13)
-
-# Style rows with alternating colors
-for i in range(1, len(summary_data) + 1):
-    for j in range(4):
-        if i % 2 == 0:
-            table[(i, j)].set_facecolor('#ecf0f1')
-        else:
-            table[(i, j)].set_facecolor('white')
-        table[(i, j)].set_text_props(fontsize=12, fontweight='bold')
-
-# Add a subtle border
-for key, cell in table.get_celld().items():
-    cell.set_linewidth(1.5)
-    cell.set_edgecolor('#34495e')
-
-ax6.text(0.5, 0.95, 'Summary Statistics: CAGE Challenge 4 Parity Comparison',
-         ha='center', va='top', fontsize=16, fontweight='bold', 
-         transform=ax6.transAxes)
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '06_summary_statistics.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 7. Paper vs Our Results Comparison
-# ============================================================================
-fig7, ax7 = plt.subplots(figsize=(13, 8))
-
-paper_models = ['GPT-4o Mini\n(Baseline)', 'UCSC Hybrid\n(LLM+RL)', 'KEEP RL\n(Pure RL)']
-paper_rewards = [-2547.2, -1600, -493.0]
-paper_std = [498.8, 700, 95.9]
-paper_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
-
-our_models = ['Qwen2.5-7b\n(Ours)', 'DeepSeek-r1-1.5b\n(Ours)']
-our_rewards = [-866.5, -477.5]
-our_std = [341.53, 116.67]
-our_colors = ['#FFA07A', '#98D8C8']
-
-x_paper = np.arange(len(paper_models))
-x_our = np.arange(len(our_models)) + len(paper_models) + 0.8
-
-all_x = list(x_paper) + list(x_our)
-all_rewards = paper_rewards + our_rewards
-all_std = paper_std + our_std
-all_colors = paper_colors + our_colors
-all_labels = paper_models + our_models
-
-bars = ax7.bar(all_x, all_rewards, yerr=all_std, capsize=10,
-               color=all_colors, edgecolor=['#C92A2A', '#0A8080', '#0D6BA3', '#DD6D3D', '#4A9B7F'],
-               linewidth=2.5, alpha=0.85, error_kw={'elinewidth': 2.5, 'capthick': 3})
-
-ax7.set_ylabel('Mean Reward (μ)', fontsize=14, fontweight='bold')
-ax7.set_xlabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax7.set_title('Paper Results vs Our Implementations\nCAGE Challenge 4 Parity Comparison', 
-              fontsize=15, fontweight='bold', pad=20)
-ax7.set_xticks(all_x)
-ax7.set_xticklabels(all_labels, fontsize=12)
-ax7.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
-ax7.grid(axis='y', alpha=0.4, linewidth=0.8)
-
-# Add divider line
-ax7.axvline(x=(len(paper_models)-0.5) + 0.4, color='black', linestyle='--', 
-            linewidth=2.5, alpha=0.6)
-
-# Add section labels
-ax7.text(1, ax7.get_ylim()[1]*0.92, 'Paper Results', fontsize=13, 
-         fontweight='bold', ha='center', 
-         bbox=dict(boxstyle='round,pad=0.6', facecolor='wheat', alpha=0.7, edgecolor='black', linewidth=2))
-ax7.text(3.8, ax7.get_ylim()[1]*0.92, 'Our Results', fontsize=13, 
-         fontweight='bold', ha='center',
-         bbox=dict(boxstyle='round,pad=0.6', facecolor='lightblue', alpha=0.7, edgecolor='black', linewidth=2))
-
-# Add value labels
-for i, (bar, mean, std) in enumerate(zip(bars, all_rewards, all_std)):
-    height = bar.get_height()
-    ax7.text(bar.get_x() + bar.get_width()/2., height,
-             f'{mean:.1f}\n±{std:.1f}',
-             ha='center', va='bottom' if height > 0 else 'top', 
-             fontsize=10, fontweight='bold')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '07_paper_vs_ours.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-# ============================================================================
-# 8. Relative Performance Improvement
-# ============================================================================
-fig8, ax8 = plt.subplots(figsize=(13, 8))
-
-baseline = -2547.2
-improvements_vs_baseline = []
-model_names = []
-
-all_rewards_combined = paper_rewards + our_rewards
-for reward in all_rewards_combined:
-    imp = ((baseline - reward) / abs(baseline)) * 100
-    improvements_vs_baseline.append(imp)
-    
-for model in paper_models + our_models:
-    model_names.append(model)
-
-colors_improvement = ['#bdc3c7', '#bdc3c7', '#bdc3c7', '#FFA07A', '#98D8C8']
-bars2 = ax8.barh(model_names, improvements_vs_baseline, 
-                 color=colors_improvement, edgecolor=['#7f8c8d', '#7f8c8d', '#7f8c8d', '#DD6D3D', '#4A9B7F'],
-                 linewidth=2.5, alpha=0.85, height=0.6)
-
-ax8.set_xlabel('Improvement vs Baseline (%)', fontsize=14, fontweight='bold')
-ax8.set_ylabel('Agent Configuration', fontsize=14, fontweight='bold')
-ax8.set_title('Relative Performance vs GPT-4o Mini Baseline\nHigher % = Better Performance', 
-              fontsize=15, fontweight='bold', pad=20)
-ax8.grid(axis='x', alpha=0.4, linewidth=0.8)
-
-max_val = max(improvements_vs_baseline) if improvements_vs_baseline else 100
-ax8.set_xlim(0, max(max_val * 1.15, 85))
-
-# Add value labels
-for bar, val in zip(bars2, improvements_vs_baseline):
-    width = bar.get_width()
-    ax8.text(width + 2, bar.get_y() + bar.get_height()/2.,
-             f'+{val:.1f}%',
-             ha='left', va='center', fontsize=12, fontweight='bold', color='darkgreen')
-
-plt.tight_layout()
-out_file = OUTPUT_DIR / '08_relative_improvement.png'
-plt.savefig(out_file, dpi=300, bbox_inches='tight')
-print(f"✓ Saved: {out_file}")
-plt.close()
-
-
-print("\n" + "="*70)
-print("MATPLOTLIB VISUALIZATION COMPLETE - SEPARATE DIAGRAMS")
-print("="*70)
-
-print("\nGenerated 9 separate visualization files:")
-print("\n1. 01_mean_reward_comparison.png")
-print("   Main comparison of all agent configurations with error bars")
-
-print("\n2. 02_improvement_percentage.png")
-print("   Performance improvement percentages vs baseline")
-
-print("\n3. 03_standard_deviation.png")
-print("   Reward variability across episodes for each configuration")
-
-print("\n4. 04_stability_coefficient.png")
-print("   Coefficient of variation (CV) - consistency metric")
-
-print("\n5. 05_confidence_intervals.png")
-print("   95% confidence interval ranges (Mean ± 2σ)")
-
-print("\n6. 06_summary_statistics.png")
-print("   Table with all key metrics for easy reference")
-
-print("\n7. 07_paper_vs_ours.png")
-print("   Side-by-side comparison: Paper baselines + Our implementations")
-
-print("\n8. 08_relative_improvement.png")
-print("   Horizontal bar chart of improvement percentages")
-
-print("\n9. 09_hallucination_and_self_correction.png")
-print("   Hallucination count vs successful self-corrections (Qwen vs DeepSeek)")
-
-print("\n" + "="*70)
-print("KEY FINDINGS:")
-print("="*70)
-print(f"\nBaseline (GPT-4o Mini):        μ = -2547.2  ±  498.8   (CV = 0.196)")
-print(f"UCSC Hybrid (LLM+RL):          μ = -1600    ±  ~700    (+37.1%, CV = 0.438)")
-print(f"KEEP RL Expert (Pure RL):      μ = -493.0   ±  95.9    (+80.6%, CV = 0.195)")
-print(f"Ours: Qwen2.5-7b Hybrid:       μ = -866.5   ±  341.53  (+65.9%, CV = 0.394)")
-print(f"Ours: DeepSeek-r1-1.5b Hybrid: μ = -477.5   ±  116.67  (+81.3%, CV = 0.244)")
-
-print("\nPerformance Rankings:")
-print("  🥇 Best Reward:    DeepSeek-r1-1.5b (-477.5)")
-print("  🥈 Second:         KEEP RL Expert (-493.0)")
-print("  🥉 Third:          Qwen2.5-7b (-866.5)")
-
-print("\nStability Rankings (Lower CV = More Consistent):")
-print("  🥇 Most Stable:    KEEP RL Expert (CV = 0.195) / Baseline (CV = 0.196)")
-print("  🥈 Second:         DeepSeek-r1-1.5b (CV = 0.244)")
-print("  🥉 Third:          Qwen2.5-7b (CV = 0.394)")
-
-print("\n" + "="*70)
-print(f"All visualizations are ready in: {OUTPUT_DIR}")
-print("="*70 + "\n")
+ax.set_ylabel("Count", fontsize=13, fontweight="bold")
+ax.set_xticks(x)
+ax.set_xticklabels(models, fontsize=12)
+ax.grid(axis="y", alpha=0.35)
+ax.legend(fontsize=11, loc="upper right")
+
+ax.set_ylim(0, max(total_hallucinations) * 1.25)
+ax.text(
+    0.01,
+    0.98,
+    "Numbers on the repaired bars are successful-fix percentages; the bars themselves are counts.",
+    transform=ax.transAxes,
+    ha="left",
+    va="top",
+    fontsize=10,
+    color="#444444",
+)
+
+fig.tight_layout()
+fig.savefig(OUTPUT_FILE, dpi=300, bbox_inches="tight")
+print(f"Saved single graph: {OUTPUT_FILE}")
