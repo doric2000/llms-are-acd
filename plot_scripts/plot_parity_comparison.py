@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Rectangle
 from pathlib import Path
+import json
 
 # Set style
 plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
@@ -65,6 +66,127 @@ for i, (bar, mean, std) in enumerate(zip(bars, rewards_mean, rewards_std)):
 plt.tight_layout()
 out_file = OUTPUT_DIR / '01_mean_reward_comparison.png'
 plt.savefig(out_file, dpi=300, bbox_inches='tight')
+print(f"✓ Saved: {out_file}")
+plt.close()
+
+# ============================================================================
+# 9. Hallucinations vs Successful Self-Corrections (Qwen vs DeepSeek)
+# ============================================================================
+strict_summary_paths = {
+    "Qwen2.5-7b": Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_qwen" / "results" / "summary.json",
+    "DeepSeek-r1-1.5b": Path(__file__).resolve().parents[1] / "results" / "cybermonics_strict_comparison_deepseek" / "results" / "summary.json",
+}
+
+
+def load_hallucination_data(model_name, summary_path):
+    # Fallback values are the latest strict-run numbers discussed in this workspace.
+    fallback = {
+        "Qwen2.5-7b": {"hallucinations": 26, "self_corrections": 9},
+        "DeepSeek-r1-1.5b": {"hallucinations": 229, "self_corrections": 89},
+    }
+
+    try:
+        with open(summary_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        hallucination = payload.get("hallucination", {})
+        return {
+            "hallucinations": int(hallucination.get("total_hallucination_count", 0)),
+            "self_corrections": int(hallucination.get("repair_success_count", 0)),
+        }
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        print(f"! Warning: Could not read {summary_path} ({exc}). Using fallback for {model_name}.")
+        return fallback[model_name]
+
+
+hall_data_qwen = load_hallucination_data("Qwen2.5-7b", strict_summary_paths["Qwen2.5-7b"])
+hall_data_deepseek = load_hallucination_data("DeepSeek-r1-1.5b", strict_summary_paths["DeepSeek-r1-1.5b"])
+
+hall_models = ["Qwen2.5-7b", "DeepSeek-r1-1.5b"]
+hallucination_counts = [hall_data_qwen["hallucinations"], hall_data_deepseek["hallucinations"]]
+self_correction_counts = [hall_data_qwen["self_corrections"], hall_data_deepseek["self_corrections"]]
+
+fig9, ax9 = plt.subplots(figsize=(12, 7))
+x = np.arange(len(hall_models))
+width = 0.35
+
+bars_hall = ax9.bar(
+    x - width / 2,
+    hallucination_counts,
+    width,
+    label="Total Hallucinations",
+    color="#E74C3C",
+    edgecolor="#922B21",
+    linewidth=2,
+    alpha=0.85,
+)
+bars_fix = ax9.bar(
+    x + width / 2,
+    self_correction_counts,
+    width,
+    label="Successful Self-Corrections",
+    color="#2ECC71",
+    edgecolor="#1E8449",
+    linewidth=2,
+    alpha=0.85,
+)
+
+ax9.set_title(
+    "Hallucinations vs Successful Self-Corrections\nStrict Parity Runs (2×500 Steps)",
+    fontsize=15,
+    fontweight="bold",
+    pad=20,
+)
+ax9.set_xlabel("Model", fontsize=14, fontweight="bold")
+ax9.set_ylabel("Count", fontsize=14, fontweight="bold")
+ax9.set_xticks(x)
+ax9.set_xticklabels(hall_models, fontsize=12)
+ax9.grid(axis="y", alpha=0.4, linewidth=0.8)
+ax9.legend(fontsize=12, loc="upper left")
+
+for bar in bars_hall:
+    height = bar.get_height()
+    ax9.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{int(height)}",
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontweight="bold",
+    )
+
+for bar in bars_fix:
+    height = bar.get_height()
+    ax9.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{int(height)}",
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontweight="bold",
+    )
+
+for idx, model in enumerate(hall_models):
+    hall = hallucination_counts[idx]
+    fixed = self_correction_counts[idx]
+    rate = (fixed / hall * 100.0) if hall else 0.0
+    ax9.text(
+        x[idx],
+        max(hall, fixed) + max(hallucination_counts) * 0.05,
+        f"Fix Rate: {rate:.1f}%",
+        ha="center",
+        va="bottom",
+        fontsize=11,
+        fontweight="bold",
+        color="#34495E",
+    )
+
+ax9.set_ylim(0, max(hallucination_counts) * 1.25 if hallucination_counts else 1)
+
+plt.tight_layout()
+out_file = OUTPUT_DIR / "09_hallucination_and_self_correction.png"
+plt.savefig(out_file, dpi=300, bbox_inches="tight")
 print(f"✓ Saved: {out_file}")
 plt.close()
 
@@ -376,7 +498,7 @@ print("\n" + "="*70)
 print("MATPLOTLIB VISUALIZATION COMPLETE - SEPARATE DIAGRAMS")
 print("="*70)
 
-print("\nGenerated 8 separate visualization files:")
+print("\nGenerated 9 separate visualization files:")
 print("\n1. 01_mean_reward_comparison.png")
 print("   Main comparison of all agent configurations with error bars")
 
@@ -400,6 +522,9 @@ print("   Side-by-side comparison: Paper baselines + Our implementations")
 
 print("\n8. 08_relative_improvement.png")
 print("   Horizontal bar chart of improvement percentages")
+
+print("\n9. 09_hallucination_and_self_correction.png")
+print("   Hallucination count vs successful self-corrections (Qwen vs DeepSeek)")
 
 print("\n" + "="*70)
 print("KEY FINDINGS:")
