@@ -8,6 +8,14 @@ It is also part of the course project **Advanced Subjects In Cyber Protection**.
 - Original paper: [Large Language Models are Autonomous Cyber Defenders (arXiv:2505.04843)](https://arxiv.org/abs/2505.04843)
 - Our paper (this repo): `pdf/LaTeX/LLMRL_Baruh_Dor_2026.pdf`
 
+## Portfolio overview
+
+**Extension authors: Dor Cohen and Baruh Ifraimov.** The simulator and baseline agent are upstream work by Castro et al.; this fork adds action validation, structured-output handling, local inference configurations, and experiment telemetry.
+
+![Observation, LLM generation, action gating, and evaluation](docs/portfolio-architecture.svg)
+
+For a reviewer, start with the contribution map below and [PROJECT_DELTA_FROM_ORIGINAL.md](docs/PROJECT_DELTA_FROM_ORIGINAL.md). Implemented capabilities are separated from measured results. The result artifact dated **16 April 2026** uses its own run context; values from different protocols are not directly comparable and do not establish a percentage improvement over an upstream baseline.
+
 ## Agent guides
 
 - **[Cybermonic RL agent guide](docs/CYBERMONIC_RL_AGENT_GUIDE.md)** — how Cybermonic defenders are built and trained (PPO, GNN stack, hyperparameters, checkpoints, extending training).
